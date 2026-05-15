@@ -1,0 +1,4 @@
+ENG,Faculty of Engineering
+SCI,Faculty of Science
+BUS,Faculty of Business
+ART,Faculty of Arts & Humanities

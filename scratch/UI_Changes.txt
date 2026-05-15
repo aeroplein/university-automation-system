@@ -1,0 +1,120 @@
+// --- Admin Dashboard: Faculty Tab ---
+private JPanel createFacultiesPanel() {
+    JPanel panel = new JPanel(new BorderLayout(10, 10));
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    JPanel formPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+    formPanel.setBorder(BorderFactory.createTitledBorder("Add New Faculty"));
+    
+    JTextField codeField = new JTextField();
+    JTextField nameField = new JTextField();
+    JButton addButton = new JButton("Add Faculty");
+
+    formPanel.add(new JLabel("Faculty Code:"));
+    formPanel.add(codeField);
+    formPanel.add(new JLabel("Faculty Name:"));
+    formPanel.add(nameField);
+    formPanel.add(new JLabel(""));
+    formPanel.add(addButton);
+
+    String[] columns = {"Code", "Name"};
+    DefaultTableModel model = new DefaultTableModel(columns, 0);
+    JTable table = new JTable(model);
+    
+    Runnable refreshTable = () -> {
+        model.setRowCount(0);
+        for (Faculty f : dataStore.getAllFaculties()) {
+            model.addRow(new Object[]{f.getCode(), f.getName()});
+        }
+    };
+    refreshTable.run();
+
+    addButton.addActionListener(e -> {
+        String code = codeField.getText().trim();
+        String name = nameField.getText().trim();
+        if (!code.isEmpty() && !name.isEmpty()) {
+            dataStore.addFaculty(new Faculty(code, name));
+            refreshTable.run();
+            codeField.setText("");
+            nameField.setText("");
+        }
+    });
+
+    panel.add(formPanel, BorderLayout.NORTH);
+    panel.add(new JScrollPane(table), BorderLayout.CENTER);
+    return panel;
+}
+
+// --- Admin Dashboard: Curriculum Tab ---
+private JPanel createCurriculumPanel() {
+    JPanel panel = new JPanel(new BorderLayout(10, 10));
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+    formPanel.setBorder(BorderFactory.createTitledBorder("Assign Course to Curriculum"));
+
+    JComboBox<String> deptCombo = new JComboBox<>();
+    updateDepartmentCombo(deptCombo);
+    
+    JComboBox<Integer> yearCombo = new JComboBox<>(new Integer[]{1, 2, 3, 4});
+    
+    JComboBox<String> courseCombo = new JComboBox<>();
+    for (Course c : dataStore.getAllCourses()) {
+        courseCombo.addItem(c.getCode() + " - " + c.getName());
+    }
+
+    JButton addButton = new JButton("Add to Curriculum");
+
+    formPanel.add(new JLabel("Department:"));
+    formPanel.add(deptCombo);
+    formPanel.add(new JLabel("Year:"));
+    formPanel.add(yearCombo);
+    formPanel.add(new JLabel("Course:"));
+    formPanel.add(courseCombo);
+    formPanel.add(new JLabel(""));
+    formPanel.add(addButton);
+
+    String[] columns = {"Dept", "Year", "Course"};
+    DefaultTableModel model = new DefaultTableModel(columns, 0);
+    JTable table = new JTable(model);
+
+    Runnable refreshTable = () -> {
+        model.setRowCount(0);
+        for (CurriculumMapping m : dataStore.getAllCurriculumMappings()) {
+            model.addRow(new Object[]{m.getDepartmentCode(), m.getYear(), m.getCourseCode()});
+        }
+    };
+    refreshTable.run();
+
+    addButton.addActionListener(e -> {
+        String dept = (String) deptCombo.getSelectedItem();
+        Integer year = (Integer) yearCombo.getSelectedItem();
+        String courseItem = (String) courseCombo.getSelectedItem();
+        if (dept != null && year != null && courseItem != null) {
+            String courseCode = courseItem.split(" - ")[0];
+            dataStore.addCurriculumMapping(new CurriculumMapping(dept, year, courseCode));
+            refreshTable.run();
+        }
+    });
+
+    panel.add(formPanel, BorderLayout.NORTH);
+    panel.add(new JScrollPane(table), BorderLayout.CENTER);
+    return panel;
+}
+
+// --- Student Dashboard: Curriculum Highlighting ---
+private void refreshAvailableCourses(DefaultTableModel model, JTable table) {
+    model.setRowCount(0);
+    List<String> requiredCodes = dataStore.getCurriculumCourseCodesForStudent(currentUser.getUsername());
+    
+    for (Course c : dataStore.getAllCourses()) {
+        boolean isRequired = requiredCodes.contains(c.getCode());
+        model.addRow(new Object[]{
+            c.getCode(),
+            c.getName() + (isRequired ? " (REQUIRED)" : ""),
+            c.getCredits(),
+            c.getQuota(),
+            c.getInstructor()
+        });
+    }
+}

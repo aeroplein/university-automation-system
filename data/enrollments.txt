@@ -1,0 +1,12 @@
+pelin,CS102
+pelin,CS101
+pelin,EE201
+pelin,EE301
+pelin,CS401
+baver.calis,IE101
+baver.calis,IE201
+baver.calis,IE202
+baver.calis,IE301
+baver.calis,IE302
+baver.calis,IE303
+pelin,CS301

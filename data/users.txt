@@ -1,0 +1,26 @@
+admin,admin123,Admin,System Administrator,ADMIN001
+zeynep,zeynep123,Instructor,Zeynep Kaya,INSTR001
+ayse.demir,pass123,Instructor,Ayşe Demir,INST002
+mehmet.kaya,pass123,Instructor,Mehmet Kaya,INST003
+fatma.celik,pass123,Instructor,Fatma Çelik,INST004
+ali.yildiz,pass123,Instructor,Ali Yıldız,INST005
+zeynep.sahin,pass123,Instructor,Zeynep Şahin,INST006
+mustafa.ozturk,pass123,Instructor,Mustafa Öztürk,INST007
+emine.aydin,pass123,Instructor,Emine Aydın,INST008
+huseyin.arslan,pass123,Instructor,Hüseyin Arslan,INST009
+elif.dogan,pass123,Instructor,Elif Doğan,INST010
+cigdem.kaya,cigdem123,Student,Çiğdem Kaya,STU002
+pelin,pelin123,Student,Pelin Zeynep Kaya,STU001
+baver.calis,calis123,Student,Baver Çalış,STU003
+mehmet.celik,pass123,Student,Mehmet Çelik,STU004
+fatma.yildiz,pass123,Student,Fatma Yıldız,STU005
+mustafa.sahin,pass123,Student,Mustafa Şahin,STU006
+emine.ozturk,pass123,Student,Emine Öztürk,STU007
+hasan.aydin,pass123,Student,Hasan Aydın,STU008
+huseyin.dogan,pass123,Student,Hüseyin Doğan,STU010
+elif.kilic,pass123,Student,Elif Kılıç,STU011
+arjin.ilhan,arjin123,Student,Arjin İlhan,STU012
+hasan.gunduz,pass123,Student,Hasan Gündüz,STU009
+ahmet.yilmaz,pass123,Instructor,Ahmet Yılmaz,INST001
+kerem.yilmaz,pass123,Student,Kerem Yılmaz,STU013
+arzu.dogan,pass123,Student,Arzu Doğan,STU014

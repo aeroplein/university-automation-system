@@ -1,0 +1,9 @@
+CS,Computer Science,SCI
+EE,Electrical Engineering,ENG
+ME,Mechanical Engineering,ENG
+IE,Industrial Engineering,ENG
+CE,Civil Engineering,ENG
+CEN,Computer Engineering,ENG
+MBG,Molecular Biology and Genetics,SCI
+BA,Business Administrations,BUS
+PSY,Psychology,ART

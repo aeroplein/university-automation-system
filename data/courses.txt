@@ -1,0 +1,35 @@
+CS101,Introduction to Programming,4,50,zeynep
+CS102,Object Oriented Programming,4,50,zeynep
+CS201,Data Structures,3,40,zeynep
+CS301,Algorithms,3,40,zeynep
+CS401,Software Engineering,3,30,zeynep
+EE101,Circuit Analysis,4,50,ahmet.yilmaz
+EE102,Digital Logic Design,3,40,ahmet.yilmaz
+EE201,Signals and Systems,4,45,ahmet.yilmaz
+EE202,Electromagnetic Theory,3,40,ayse.demir
+EE301,Microprocessors,4,35,ayse.demir
+EE302,Control Systems,3,30,ayse.demir
+EE401,Power Electronics,3,30,mehmet.kaya
+EE402,Communication Systems,4,25,mehmet.kaya
+EE403,VLSI Design,3,25,mehmet.kaya
+ME101,Engineering Mechanics I,4,50,fatma.celik
+ME102,Engineering Mechanics II,4,45,fatma.celik
+ME201,Thermodynamics I,3,40,fatma.celik
+ME202,Fluid Mechanics,4,40,ali.yildiz
+ME301,Heat Transfer,3,35,ali.yildiz
+ME302,Machine Elements,4,30,ali.yildiz
+ME401,System Dynamics,3,30,zeynep.sahin
+ME402,Manufacturing Processes,3,35,zeynep.sahin
+ME403,Robotics,3,25,zeynep.sahin
+IE101,Introduction to Industrial Engineering,3,50,mustafa.ozturk
+IE201,Operations Research I,4,45,mustafa.ozturk
+IE202,Probability and Statistics,3,40,mustafa.ozturk
+IE301,Production Planning,4,40,emine.aydin
+IE302,Quality Management,3,35,emine.aydin
+IE303,Simulation,3,30,emine.aydin
+IE401,Supply Chain Management,3,30,huseyin.arslan
+IE402,Facilities Design,3,35,huseyin.arslan
+IE403,Ergonomics,3,25,huseyin.arslan
+CS302,Database Systems,4,45,elif.dogan
+CS402,Operating Systems,4,40,elif.dogan
+CS403,Computer Networks,3,35,elif.dogan

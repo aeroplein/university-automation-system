@@ -1,0 +1,10 @@
+202511736,Fatma Yıldız,CS,1,fatma.yildiz,ME,1
+202833018,Mustafa Şahin,IE,4,mustafa.sahin
+202722011,Hasan Aydın,EE,3,hasan.aydin
+202555017,Hüseyin Doğan,CE,1,huseyin.dogan
+202711022,Elif Kılıç,CS,3,elif.kilic
+S001,Dual Student,CS,3,stest_dual,EE,1
+202333950,Arjin İlhan,EE,3,arjin.ilhan
+202251230,Çiğdem Kaya,BA,4,cigdem.kaya,PSY,2
+202514814,Pelin Zeynep Kaya,CEN,3,pelin,IE,1
+202214664,Baver Çalış,CEN,4,baver.calis

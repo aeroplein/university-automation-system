@@ -1,0 +1,6 @@
+pelin,CS101,100.00,100.00
+pelin,CS102,100.00,100.00
+pelin,CS401,100.00,100.00
+baver.calis,IE101,100.00,100.00
+baver.calis,IE201,100.00,100.00
+baver.calis,IE202,100.00,100.00
