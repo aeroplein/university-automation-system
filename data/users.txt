@@ -1547,3 +1547,5 @@ deniz.can,pass123,Student,Deniz Can,202380859,
 sinan.dogan,pass123,Student,Sinan Doğan,202380354,
 pelin.deneme,deneme,Instructor,Pelin Deneme,INST012,
 sevgi.guler,pass123,Instructor,Sevgi Güler,INS-26-053,
+selim.ozturk,pass123,Instructor,Selim Öztürk,INS-26-054,BA
+selin.aydogan,pass123,Instructor,Selin Aydoğan,INS-26-055,PSY

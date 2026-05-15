@@ -3,7 +3,6 @@ package ui.instructor;
 import data.DataStore;
 import model.Course;
 import model.User;
-import ui.GradeDistributionChart;
 import ui.shared.Refreshable;
 import ui.shared.UIUtils;
 
