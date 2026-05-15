@@ -1,32 +1,52 @@
-# Compiled class files
+# ─── Compiled output ───────────────────────────────────────────────────────────
 *.class
 bin/
 out/
 
-# IDE files
+# ─── IDE / Editor files ────────────────────────────────────────────────────────
 .idea/
 *.iml
 *.project
 *.classpath
 *.settings/
+.vscode/
 
-# Generated data files (optional, depending on if you want default data in version control)
-# It's usually best to ignore the data directory contents but keep the directory itself
-data/*.txt
-!data/departments.txt
-!data/faculties.txt
-!data/curriculum.txt
+# ─── Developer / submission docs (not part of the project structure) ───────────
+ManualTestScript.md
+PROJECT_STRUCTURE.txt
+QUICK_REFERENCE.md
+SUBMISSION_CHECKLIST.md
+TESTING_GUIDE.md
 
-# Exported transcripts
+# ─── Extra test runner scripts ─────────────────────────────────────────────────
+run_comprehensive_tests.bat
+run_tests.bat
+
+# ─── Archives ──────────────────────────────────────────────────────────────────
+*.zip
+*.tar.gz
+*.rar
+
+# ─── Exported transcripts (runtime output) ─────────────────────────────────────
 transcripts/
 transcript_*.txt
 transcript_*.pdf
 
-# Archives and logs
-*.zip
-*.tar.gz
+# ─── Logs ──────────────────────────────────────────────────────────────────────
 *.log
 
-# OS generated files
+# ─── OS generated files ────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ─── Data files — keep structure dirs but ignore runtime-generated content ──────
+# Versioned seed files (kept):
+#   data/departments.txt  – dept codes
+#   data/faculties.txt    – faculty list
+#   data/curriculum.txt   – programme curriculum
+# Runtime files (ignored):
+data/users.txt
+data/students.txt
+data/courses.txt
+data/enrollments.txt
+data/grades.txt
