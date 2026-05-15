@@ -258,10 +258,11 @@ studentUsername,courseCode,midterm,finalExam
 
 ### Professional Interface
 
-- Color-coded role dashboards (Blue: Admin, Green: Instructor, Purple: Student)
-- Consistent layout and styling
-- Intuitive tab-based navigation
-- Clean, modern appearance
+- Premium 'UniAuto' Earth-Tone Palette (Cocoa Brown, Sage Green, Warm Beige,
+  Terracotta)
+- Unified FlatLaf UI integration for a modern, flat aesthetic
+- Intuitive tabbed dashboard with consistent headers across all roles
+- Clean, modern, and highly readable appearance
 
 ### Swing Components Used
 
@@ -272,53 +273,11 @@ studentUsername,courseCode,midterm,finalExam
 - JOptionPane for dialogs
 - GridBagLayout, BorderLayout, GridLayout, FlowLayout
 
-## 🏆 Rubric Alignment (100/100)
+### External Libraries Used
 
-### System Design & Architecture (15/15)
-
-✅ Clear package structure (model, data, ui) ✅ Singleton pattern in DataStore
-✅ Separation of concerns (MVC) ✅ Logical class relationships
-
-### Object-Oriented Programming (15/15)
-
-✅ Full encapsulation with private fields ✅ Getters/setters for all properties
-✅ Proper class design with single responsibility ✅ Reusable methods and
-components
-
-### GUI Design (15/15)
-
-✅ Professional, user-friendly interface ✅ Proper layout managers throughout ✅
-Consistent design across all panels ✅ Role-based dashboards
-
-### Event Handling (10/10)
-
-✅ ActionListener on all buttons ✅ Password field enter-key support ✅ Form
-validation on submit ✅ Responsive UI behavior
-
-### Data Persistence (10/10)
-
-✅ Complete file I/O implementation ✅ Data consistency across restarts ✅ No
-data loss ✅ Structured file format
-
-### Functional Completeness (10/10)
-
-✅ All admin features implemented ✅ All instructor features implemented ✅ All
-student features implemented ✅ All core operations working
-
-### Validation & Error Handling (10/10)
-
-✅ Comprehensive input validation ✅ Business rule enforcement ✅ User-friendly
-error messages ✅ Exception handling throughout
-
-### JTable Usage & Data Display (5/5)
-
-✅ Multiple JTables with proper models ✅ Dynamic data loading and refresh ✅
-Editable cells where appropriate ✅ Professional table formatting
-
-### Code Quality (10/10)
-
-✅ Clean, readable code ✅ Consistent naming conventions ✅ Proper comments and
-documentation ✅ Well-organized structure
+- **FlatLaf (v3.5.4):** A modern, open-source cross-platform Look and Feel for Java Swing desktop applications. Used to implement the "Earth-Tone" UI aesthetic.
+- **iText PDF (v5.5.13.4):** Used for generating and exporting student transcripts as PDF documents.
+- **JFreeChart (v1.5.6):** Used for rendering professional grade distribution charts in the instructor dashboard.
 
 ## 📝 Sample Workflow
 

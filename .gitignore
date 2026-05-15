@@ -1,0 +1,32 @@
+# Compiled class files
+*.class
+bin/
+out/
+
+# IDE files
+.idea/
+*.iml
+*.project
+*.classpath
+*.settings/
+
+# Generated data files (optional, depending on if you want default data in version control)
+# It's usually best to ignore the data directory contents but keep the directory itself
+data/*.txt
+!data/departments.txt
+!data/faculties.txt
+!data/curriculum.txt
+
+# Exported transcripts
+transcripts/
+transcript_*.txt
+transcript_*.pdf
+
+# Archives and logs
+*.zip
+*.tar.gz
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db

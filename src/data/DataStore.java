@@ -94,12 +94,92 @@ public class DataStore {
             if (faculties.isEmpty()) {
                 createDefaultFaculties();
             }
-            
+
+            // Enterprise Migration: Transition students from ID-based usernames to name-based usernames
+            migrateUsernames();
+
             // Scalability: Ensure at least 25 students per department
             scaleData();
         } catch (Exception e) {
             System.err.println("Error initializing DataStore: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Migration logic to transition student usernames to name-surname format.
+     * Preserves all existing profile data and credentials.
+     */
+    private void migrateUsernames() {
+        boolean changed = false;
+        for (User u : new ArrayList<>(users)) {
+            if ("Student".equalsIgnoreCase(u.getRole())) {
+                // Find corresponding profile to get the true Student ID
+                StudentProfile profile = findStudentProfileByUsername(u.getUsername());
+                
+                // If profile not found by username, try by fullName (risky but better than nothing)
+                if (profile == null) {
+                    profile = students.stream()
+                        .filter(s -> s.getFullName().equalsIgnoreCase(u.getFullName()))
+                        .findFirst()
+                        .orElse(null);
+                }
+
+                boolean needsMigration = false;
+                
+                // 1. Force migration to name.surname if dot is missing
+                if (!u.getUsername().contains(".")) {
+                    needsMigration = true;
+                }
+                
+                // 2. Ensure referenceId matches true studentId for dual authentication
+                if (profile != null && !profile.getStudentId().equals(u.getReferenceId())) {
+                    u.setReferenceId(profile.getStudentId());
+                    needsMigration = true;
+                }
+
+                if (needsMigration) {
+                    String oldUsername = u.getUsername();
+                    String newUsername = u.getUsername();
+                    
+                    if (!oldUsername.contains(".")) {
+                        newUsername = util.InputValidator.generateUsername(u.getFullName());
+                        // Ensure uniqueness
+                        String base = newUsername;
+                        int suffix = 1;
+                        while (findUser(newUsername) != null) {
+                            newUsername = base + (suffix++);
+                        }
+                    }
+                    
+                    // Update User record
+                    u.setUsername(newUsername);
+                    
+                    // Update StudentProfile linkage
+                    if (profile != null) {
+                        profile.setUsername(newUsername);
+                    } else {
+                        // If no profile was found, try to find one by old username again just in case
+                        StudentProfile p = findStudentProfileByUsername(oldUsername);
+                        if (p != null) p.setUsername(newUsername);
+                    }
+                    
+                    // Update linked records
+                    final String targetNewUsername = newUsername;
+                    enrollments.forEach(e -> { if (e.getStudentUsername().equals(oldUsername)) e.setStudentUsername(targetNewUsername); });
+                    grades.forEach(g -> { if (g.getStudentUsername().equals(oldUsername)) g.setStudentUsername(targetNewUsername); });
+                    
+                    changed = true;
+                }
+            }
+        }
+        
+        if (changed) {
+            saveUsers();
+            saveStudents();
+            saveEnrollments();
+            saveGrades();
+            System.out.println("System Migration: Successfully synchronized student IDs and professional usernames.");
         }
     }
 
@@ -121,24 +201,24 @@ public class DataStore {
         addDepartment(new Department("ME", "Mechanical Engineering", "ENG"));
         addDepartment(new Department("IE", "Industrial Engineering", "ENG"));
         addDepartment(new Department("CEN", "Computer Engineering", "ENG"));
-        
+
         // Science
         addDepartment(new Department("MATH", "Mathematics", "SCI"));
         addDepartment(new Department("PHYS", "Physics", "SCI"));
-        
+
         // Business
         addDepartment(new Department("BA", "Business Administration", "BUS"));
         addDepartment(new Department("ECON", "Economics", "BUS"));
-        
+
         // Arts & Humanities
         addDepartment(new Department("PSY", "Psychology", "ART"));
         addDepartment(new Department("SOC", "Sociology", "ART"));
-        
+
         // Law (New Faculty)
         addFaculty(new Faculty("LAW", "Faculty of Law"));
         addDepartment(new Department("LAW", "Law", "LAW"));
         addDepartment(new Department("INTL", "International Law", "LAW"));
-        
+
         saveDepartments();
     }
 
@@ -148,7 +228,8 @@ public class DataStore {
     }
 
     public Department findDepartment(String code) {
-        if (code == null) return null;
+        if (code == null)
+            return null;
         return departments.stream()
                 .filter(d -> d.getCode().equalsIgnoreCase(code))
                 .findFirst()
@@ -156,24 +237,30 @@ public class DataStore {
     }
 
     public boolean addDepartment(Department dept) {
-        if (dept == null || dept.getCode() == null || dept.getCode().trim().isEmpty()) return false;
-        if (findDepartment(dept.getCode()) != null) return false;
+        if (dept == null || dept.getCode() == null || dept.getCode().trim().isEmpty())
+            return false;
+        if (findDepartment(dept.getCode()) != null)
+            return false;
         departments.add(dept);
         saveDepartments();
         return true;
     }
 
     /**
-     * Update department. Returns: 1 if updated, 0 if no changes, -1 if error/not found.
+     * Update department. Returns: 1 if updated, 0 if no changes, -1 if error/not
+     * found.
      */
     public int updateDepartment(Department dept) {
-        if (dept == null || dept.getCode() == null) return -1;
+        if (dept == null || dept.getCode() == null)
+            return -1;
         Department existing = findDepartment(dept.getCode());
-        if (existing == null) return -1;
+        if (existing == null)
+            return -1;
 
-        boolean changed = !existing.getName().equals(dept.getName()) || 
-                         !existing.getFacultyCode().equals(dept.getFacultyCode());
-        if (!changed) return 0;
+        boolean changed = !existing.getName().equals(dept.getName()) ||
+                !existing.getFacultyCode().equals(dept.getFacultyCode());
+        if (!changed)
+            return 0;
 
         existing.setName(dept.getName());
         existing.setFacultyCode(dept.getFacultyCode());
@@ -182,9 +269,11 @@ public class DataStore {
     }
 
     public boolean deleteDepartment(String code) {
-        if (code == null) return false;
+        if (code == null)
+            return false;
         boolean removed = departments.removeIf(d -> d.getCode().equalsIgnoreCase(code));
-        if (removed) saveDepartments();
+        if (removed)
+            saveDepartments();
         return removed;
     }
 
@@ -197,7 +286,13 @@ public class DataStore {
         }
 
         for (User user : users) {
-            if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
+            // Students can login with either their username (name.surname) or their referenceId (Student ID)
+            boolean usernameMatch = user.getUsername().equalsIgnoreCase(username);
+            boolean idMatch = "Student".equalsIgnoreCase(user.getRole()) && 
+                             user.getReferenceId() != null && 
+                             user.getReferenceId().equalsIgnoreCase(username);
+
+            if ((usernameMatch || idMatch) && user.getPassword().equals(password)) {
                 return user;
             }
         }
@@ -210,7 +305,8 @@ public class DataStore {
      * Find user by username
      */
     public User findUser(String username) {
-        if (username == null) return null;
+        if (username == null)
+            return null;
         String target = username.trim();
         return users.stream()
                 .filter(u -> u.getUsername().equalsIgnoreCase(target))
@@ -243,18 +339,22 @@ public class DataStore {
      * Returns: 1 if updated, 0 if no changes, -1 if not found.
      */
     public int updateUser(User user) {
-        if (user == null || user.getUsername() == null) return -1;
+        if (user == null || user.getUsername() == null)
+            return -1;
         String target = user.getUsername().trim();
         User existing = findUser(target);
-        if (existing == null) return -1;
+        if (existing == null)
+            return -1;
 
         boolean changed = !existing.getPassword().equals(user.getPassword()) ||
-                         !existing.getRole().equals(user.getRole()) ||
-                         !existing.getFullName().equals(user.getFullName()) ||
-                         !existing.getDepartment().equals(user.getDepartment()) ||
-                         (existing.getReferenceId() == null ? user.getReferenceId() != null : !existing.getReferenceId().equals(user.getReferenceId()));
-        
-        if (!changed) return 0;
+                !existing.getRole().equals(user.getRole()) ||
+                !existing.getFullName().equals(user.getFullName()) ||
+                !existing.getDepartment().equals(user.getDepartment()) ||
+                (existing.getReferenceId() == null ? user.getReferenceId() != null
+                        : !existing.getReferenceId().equals(user.getReferenceId()));
+
+        if (!changed)
+            return 0;
 
         existing.setPassword(user.getPassword());
         existing.setRole(user.getRole());
@@ -269,23 +369,28 @@ public class DataStore {
      * Delete a user by username
      */
     public boolean deleteUser(String username) {
-        if (username == null || "admin".equalsIgnoreCase(username)) return false; // Prevent deleting main admin
-        
+        if (username == null || "admin".equalsIgnoreCase(username))
+            return false; // Prevent deleting main admin
+
         // Cascade delete associated student profile and records if they exist
         User user = findUser(username);
         if (user != null && "Student".equals(user.getRole())) {
             boolean profileRemoved = students.removeIf(s -> s.getUsername().equals(username));
-            if (profileRemoved) saveStudents();
-            
+            if (profileRemoved)
+                saveStudents();
+
             boolean enrollmentsRemoved = enrollments.removeIf(e -> e.getStudentUsername().equals(username));
-            if (enrollmentsRemoved) saveEnrollments();
-            
+            if (enrollmentsRemoved)
+                saveEnrollments();
+
             boolean gradesRemoved = grades.removeIf(g -> g.getStudentUsername().equals(username));
-            if (gradesRemoved) saveGrades();
+            if (gradesRemoved)
+                saveGrades();
         }
 
         boolean removed = users.removeIf(u -> u.getUsername().equals(username));
-        if (removed) saveUsers();
+        if (removed)
+            saveUsers();
         return removed;
     }
 
@@ -302,7 +407,8 @@ public class DataStore {
      * Find student profile by username
      */
     public StudentProfile findStudentProfileByUsername(String username) {
-        if (username == null) return null;
+        if (username == null)
+            return null;
         return students.stream()
                 .filter(s -> s.getUsername().equals(username))
                 .findFirst()
@@ -313,7 +419,8 @@ public class DataStore {
      * Find student profile by student ID
      */
     public StudentProfile findStudentProfileById(String studentId) {
-        if (studentId == null) return null;
+        if (studentId == null)
+            return null;
         return students.stream()
                 .filter(s -> s.getStudentId().equals(studentId))
                 .findFirst()
@@ -348,24 +455,30 @@ public class DataStore {
      * Returns: 1 if updated, 0 if no changes, -1 if error or not found.
      */
     public int updateStudentProfile(StudentProfile updatedProfile) {
-        if (updatedProfile == null) return -1;
-        
+        if (updatedProfile == null)
+            return -1;
+
         StudentProfile existing = findStudentProfileById(updatedProfile.getStudentId());
-        if (existing == null) return -1;
+        if (existing == null)
+            return -1;
 
         // Seniority Check
         if (updatedProfile.getSecondDepartment() != null && !updatedProfile.getSecondDepartment().isEmpty()) {
-            if (updatedProfile.getYear() < updatedProfile.getSecondYear()) return -1;
+            if (updatedProfile.getYear() < updatedProfile.getSecondYear())
+                return -1;
         }
 
         boolean changed = !existing.getFullName().equals(updatedProfile.getFullName()) ||
-                         !existing.getDepartment().equals(updatedProfile.getDepartment()) ||
-                         existing.getYear() != updatedProfile.getYear() ||
-                         (existing.getSecondDepartment() == null ? updatedProfile.getSecondDepartment() != null : !existing.getSecondDepartment().equals(updatedProfile.getSecondDepartment())) ||
-                         existing.getSecondYear() != updatedProfile.getSecondYear() ||
-                         !existing.getUsername().equals(updatedProfile.getUsername());
+                !existing.getDepartment().equals(updatedProfile.getDepartment()) ||
+                existing.getYear() != updatedProfile.getYear() ||
+                (existing.getSecondDepartment() == null ? updatedProfile.getSecondDepartment() != null
+                        : !existing.getSecondDepartment().equals(updatedProfile.getSecondDepartment()))
+                ||
+                existing.getSecondYear() != updatedProfile.getSecondYear() ||
+                !existing.getUsername().equals(updatedProfile.getUsername());
 
-        if (!changed) return 0;
+        if (!changed)
+            return 0;
 
         for (int i = 0; i < students.size(); i++) {
             if (students.get(i).getStudentId().equals(updatedProfile.getStudentId())) {
@@ -393,9 +506,11 @@ public class DataStore {
      * Delete a student by ID, including cascade delete for User and records
      */
     public boolean deleteStudent(String studentId) {
-        if (studentId == null) return false;
+        if (studentId == null)
+            return false;
         StudentProfile profile = findStudentProfileById(studentId);
-        if (profile == null) return false;
+        if (profile == null)
+            return false;
 
         String username = profile.getUsername();
         if (username != null && findUser(username) != null) {
@@ -422,7 +537,8 @@ public class DataStore {
      * Find course by course code
      */
     public Course findCourse(String courseCode) {
-        if (courseCode == null) return null;
+        if (courseCode == null)
+            return null;
         return courses.stream()
                 .filter(c -> c.getCourseCode().equals(courseCode))
                 .findFirst()
@@ -452,16 +568,19 @@ public class DataStore {
      * Returns: 1 if updated, 0 if no changes, -1 if not found.
      */
     public int updateCourse(Course course) {
-        if (course == null || course.getCourseCode() == null) return -1;
+        if (course == null || course.getCourseCode() == null)
+            return -1;
         Course existing = findCourse(course.getCourseCode());
-        if (existing == null) return -1;
+        if (existing == null)
+            return -1;
 
         boolean changed = !existing.getCourseName().equals(course.getCourseName()) ||
-                         existing.getCredit() != course.getCredit() ||
-                         existing.getQuota() != course.getQuota() ||
-                         !existing.getInstructorUsername().equals(course.getInstructorUsername());
-        
-        if (!changed) return 0;
+                existing.getCredit() != course.getCredit() ||
+                existing.getQuota() != course.getQuota() ||
+                !existing.getInstructorUsername().equals(course.getInstructorUsername());
+
+        if (!changed)
+            return 0;
 
         existing.setCourseName(course.getCourseName());
         existing.setCredit(course.getCredit());
@@ -475,7 +594,8 @@ public class DataStore {
      * Remove a course
      */
     public boolean removeCourse(String courseCode) {
-        if (courseCode == null) return false;
+        if (courseCode == null)
+            return false;
         boolean removed = courses.removeIf(c -> c.getCourseCode().equals(courseCode));
         if (removed) {
             saveCourses();
@@ -499,7 +619,8 @@ public class DataStore {
      * Get courses by instructor username
      */
     public List<Course> getCoursesByInstructor(String instructorUsername) {
-        if (instructorUsername == null) return new ArrayList<>();
+        if (instructorUsername == null)
+            return new ArrayList<>();
         return courses.stream()
                 .filter(c -> c.getInstructorUsername().equals(instructorUsername))
                 .collect(Collectors.toList());
@@ -511,7 +632,8 @@ public class DataStore {
      * Count enrollments for a course
      */
     public int countEnrollmentForCourse(String courseCode) {
-        if (courseCode == null) return 0;
+        if (courseCode == null)
+            return 0;
         return (int) enrollments.stream()
                 .filter(e -> e.getCourseCode().equals(courseCode))
                 .count();
@@ -521,9 +643,10 @@ public class DataStore {
      * Check if student is already enrolled in a course
      */
     public boolean isStudentEnrolled(String studentUsername, String courseCode) {
-        if (studentUsername == null || courseCode == null) return false;
+        if (studentUsername == null || courseCode == null)
+            return false;
         return enrollments.stream()
-                .anyMatch(e -> e.getStudentUsername().equals(studentUsername) 
+                .anyMatch(e -> e.getStudentUsername().equals(studentUsername)
                         && e.getCourseCode().equals(courseCode));
     }
 
@@ -534,7 +657,8 @@ public class DataStore {
      * Finds a department code by its full name or code
      */
     public String getDepartmentCodeByName(String nameOrCode) {
-        if (nameOrCode == null || nameOrCode.trim().isEmpty()) return null;
+        if (nameOrCode == null || nameOrCode.trim().isEmpty())
+            return null;
         String search = nameOrCode.trim();
         return departments.stream()
                 .filter(d -> d.getName().equalsIgnoreCase(search) || d.getCode().equalsIgnoreCase(search))
@@ -555,21 +679,25 @@ public class DataStore {
 
         // Check if course exists
         Course course = findCourse(courseCode);
-        if (course == null) return false;
+        if (course == null)
+            return false;
 
         // Check if course belongs to student's major(s)
         StudentProfile profile = findStudentProfileByUsername(studentUsername);
         if (profile != null) {
             String primaryCode = getDepartmentCodeByName(profile.getDepartment());
             String secondCode = getDepartmentCodeByName(profile.getSecondDepartment());
-            
+
             boolean allowed = false;
             String prefix = courseCode.replaceAll("\\d.*", ""); // Extract prefix e.g. CS101 -> CS
-            
-            if (primaryCode != null && prefix.equalsIgnoreCase(primaryCode)) allowed = true;
-            if (secondCode != null && prefix.equalsIgnoreCase(secondCode)) allowed = true;
-            
-            if (!allowed) return false;
+
+            if (primaryCode != null && prefix.equalsIgnoreCase(primaryCode))
+                allowed = true;
+            if (secondCode != null && prefix.equalsIgnoreCase(secondCode))
+                allowed = true;
+
+            if (!allowed)
+                return false;
         }
 
         // Check if already enrolled
@@ -596,7 +724,6 @@ public class DataStore {
         return true;
     }
 
-
     public boolean requestEnrollment(String studentUsername, String courseCode) {
         return enrollStudent(studentUsername, courseCode, "PENDING");
     }
@@ -614,11 +741,11 @@ public class DataStore {
     }
 
     public boolean rejectRequest(String studentUsername, String courseCode) {
-        boolean removed = enrollments.removeIf(e -> 
-            e.getStudentUsername().equals(studentUsername) && 
-            e.getCourseCode().equals(courseCode) && 
-            "PENDING".equals(e.getStatus()));
-        if (removed) saveEnrollments();
+        boolean removed = enrollments.removeIf(e -> e.getStudentUsername().equals(studentUsername) &&
+                e.getCourseCode().equals(courseCode) &&
+                "PENDING".equals(e.getStatus()));
+        if (removed)
+            saveEnrollments();
         return removed;
     }
 
@@ -626,7 +753,7 @@ public class DataStore {
         List<StudentProfile> targets = students.stream()
                 .filter(s -> s.getDepartment().equalsIgnoreCase(deptCode) && s.getYear() == year)
                 .collect(Collectors.toList());
-        
+
         List<String> curriculumCourses = curriculumMappings.stream()
                 .filter(m -> m.getDepartmentCode().equalsIgnoreCase(deptCode) && m.getYear() == year)
                 .map(CurriculumMapping::getCourseCode)
@@ -638,7 +765,7 @@ public class DataStore {
                 Enrollment existing = enrollments.stream()
                         .filter(e -> e.getStudentUsername().equals(s.getUsername()) && e.getCourseCode().equals(cCode))
                         .findFirst().orElse(null);
-                
+
                 if (existing != null) {
                     if ("PENDING".equals(existing.getStatus())) {
                         existing.setStatus("APPROVED");
@@ -656,7 +783,8 @@ public class DataStore {
      * Get enrollments for a student
      */
     public List<Enrollment> getEnrollmentsByStudent(String studentUsername) {
-        if (studentUsername == null) return new ArrayList<>();
+        if (studentUsername == null)
+            return new ArrayList<>();
         return enrollments.stream()
                 .filter(e -> e.getStudentUsername().equals(studentUsername))
                 .collect(Collectors.toList());
@@ -666,7 +794,8 @@ public class DataStore {
      * Get enrollments for a course
      */
     public List<Enrollment> getEnrollmentsByCourse(String courseCode) {
-        if (courseCode == null) return new ArrayList<>();
+        if (courseCode == null)
+            return new ArrayList<>();
         return enrollments.stream()
                 .filter(e -> e.getCourseCode().equals(courseCode))
                 .collect(Collectors.toList());
@@ -683,12 +812,12 @@ public class DataStore {
      * Remove enrollment
      */
     public boolean removeEnrollment(String studentUsername, String courseCode) {
-        if (studentUsername == null || courseCode == null) return false;
-        
-        boolean removed = enrollments.removeIf(e -> 
-            e.getStudentUsername().equals(studentUsername) && 
-            e.getCourseCode().equals(courseCode));
-        
+        if (studentUsername == null || courseCode == null)
+            return false;
+
+        boolean removed = enrollments.removeIf(e -> e.getStudentUsername().equals(studentUsername) &&
+                e.getCourseCode().equals(courseCode));
+
         if (removed) {
             saveEnrollments();
         }
@@ -701,9 +830,10 @@ public class DataStore {
      * Find grade record
      */
     public GradeRecord findGrade(String studentUsername, String courseCode) {
-        if (studentUsername == null || courseCode == null) return null;
+        if (studentUsername == null || courseCode == null)
+            return null;
         return grades.stream()
-                .filter(g -> g.getStudentUsername().equals(studentUsername) 
+                .filter(g -> g.getStudentUsername().equals(studentUsername)
                         && g.getCourseCode().equals(courseCode))
                 .findFirst()
                 .orElse(null);
@@ -755,7 +885,8 @@ public class DataStore {
      * Get grades for a student
      */
     public List<GradeRecord> getGradesByStudent(String studentUsername) {
-        if (studentUsername == null) return new ArrayList<>();
+        if (studentUsername == null)
+            return new ArrayList<>();
         return grades.stream()
                 .filter(g -> g.getStudentUsername().equals(studentUsername))
                 .collect(Collectors.toList());
@@ -765,7 +896,8 @@ public class DataStore {
      * Get grades for a course
      */
     public List<GradeRecord> getGradesByCourse(String courseCode) {
-        if (courseCode == null) return new ArrayList<>();
+        if (courseCode == null)
+            return new ArrayList<>();
         return grades.stream()
                 .filter(g -> g.getCourseCode().equals(courseCode))
                 .collect(Collectors.toList());
@@ -776,7 +908,7 @@ public class DataStore {
      */
     public double calculateGPA(String studentUsername) {
         List<GradeRecord> studentGrades = getGradesByStudent(studentUsername);
-        
+
         if (studentGrades.isEmpty()) {
             return 0.0;
         }
@@ -1006,12 +1138,14 @@ public class DataStore {
     public void loadDepartments() {
         departments.clear();
         File file = new File(DEPARTMENTS_FILE);
-        if (!file.exists()) return;
+        if (!file.exists())
+            return;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 Department dept = Department.fromFileString(line);
-                if (dept != null) departments.add(dept);
+                if (dept != null)
+                    departments.add(dept);
             }
         } catch (IOException e) {
             System.err.println("Error loading departments: " + e.getMessage());
@@ -1028,12 +1162,14 @@ public class DataStore {
     private void loadFaculties() {
         faculties.clear();
         File file = new File(FACULTIES_FILE);
-        if (!file.exists()) return;
+        if (!file.exists())
+            return;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 Faculty f = Faculty.fromFileString(line);
-                if (f != null) faculties.add(f);
+                if (f != null)
+                    faculties.add(f);
             }
         } catch (IOException e) {
             System.err.println("Error loading faculties: " + e.getMessage());
@@ -1051,25 +1187,32 @@ public class DataStore {
         }
     }
 
-    public List<Faculty> getFaculties() { return faculties; }
+    public List<Faculty> getFaculties() {
+        return faculties;
+    }
 
     public boolean addFaculty(Faculty f) {
-        if (findFaculty(f.getCode()) != null) return false;
+        if (findFaculty(f.getCode()) != null)
+            return false;
         faculties.add(f);
         saveFaculties();
         return true;
     }
 
     /**
-     * Update faculty. Returns: 1 if updated, 0 if no changes, -1 if error/not found.
+     * Update faculty. Returns: 1 if updated, 0 if no changes, -1 if error/not
+     * found.
      */
     public int updateFaculty(Faculty f) {
-        if (f == null || f.getCode() == null) return -1;
+        if (f == null || f.getCode() == null)
+            return -1;
         Faculty existing = findFaculty(f.getCode());
-        if (existing == null) return -1;
+        if (existing == null)
+            return -1;
 
         boolean changed = !existing.getName().equals(f.getName());
-        if (!changed) return 0;
+        if (!changed)
+            return 0;
 
         existing.setName(f.getName());
         saveFaculties();
@@ -1077,26 +1220,32 @@ public class DataStore {
     }
 
     public Faculty findFaculty(String code) {
-        for (Faculty f : faculties) if (f.getCode().equals(code)) return f;
+        for (Faculty f : faculties)
+            if (f.getCode().equals(code))
+                return f;
         return null;
     }
 
     public boolean deleteFaculty(String code) {
-        if (code == null) return false;
+        if (code == null)
+            return false;
         boolean removed = faculties.removeIf(f -> f.getCode().equalsIgnoreCase(code));
-        if (removed) saveFaculties();
+        if (removed)
+            saveFaculties();
         return removed;
     }
 
     private void loadCurriculum() {
         curriculumMappings.clear();
         File file = new File(CURRICULUM_FILE);
-        if (!file.exists()) return;
+        if (!file.exists())
+            return;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 CurriculumMapping m = CurriculumMapping.fromFileString(line);
-                if (m != null) curriculumMappings.add(m);
+                if (m != null)
+                    curriculumMappings.add(m);
             }
         } catch (IOException e) {
             System.err.println("Error loading curriculum: " + e.getMessage());
@@ -1114,27 +1263,29 @@ public class DataStore {
         }
     }
 
-    public List<CurriculumMapping> getCurriculumMappings() { return curriculumMappings; }
+    public List<CurriculumMapping> getCurriculumMappings() {
+        return curriculumMappings;
+    }
 
     public boolean addCurriculumMapping(CurriculumMapping m) {
         // Check for duplicates
-        boolean exists = curriculumMappings.stream().anyMatch(existing -> 
-            existing.getDepartmentCode().equals(m.getDepartmentCode()) &&
-            existing.getYear() == m.getYear() &&
-            existing.getCourseCode().equals(m.getCourseCode())
-        );
-        
-        if (exists) return false;
-        
+        boolean exists = curriculumMappings.stream()
+                .anyMatch(existing -> existing.getDepartmentCode().equals(m.getDepartmentCode()) &&
+                        existing.getYear() == m.getYear() &&
+                        existing.getCourseCode().equals(m.getCourseCode()));
+
+        if (exists)
+            return false;
+
         curriculumMappings.add(m);
         saveCurriculum();
         return true;
     }
 
     public void removeCurriculumMapping(String dept, int year, String course) {
-        curriculumMappings.removeIf(m -> m.getDepartmentCode().equals(dept) && 
-                                       m.getYear() == year && 
-                                       m.getCourseCode().equals(course));
+        curriculumMappings.removeIf(m -> m.getDepartmentCode().equals(dept) &&
+                m.getYear() == year &&
+                m.getCourseCode().equals(course));
         saveCurriculum();
     }
 
@@ -1150,7 +1301,8 @@ public class DataStore {
 
     public List<String> getCurriculumCourseCodesForStudent(String username) {
         StudentProfile profile = findStudentProfileByUsername(username);
-        if (profile == null) return new ArrayList<>();
+        if (profile == null)
+            return new ArrayList<>();
 
         List<String> codes = new ArrayList<>();
         String deptCode = getDepartmentCodeByName(profile.getDepartment());
@@ -1170,6 +1322,7 @@ public class DataStore {
 
         return codes;
     }
+
     public List<Faculty> getAllFaculties() {
         return faculties;
     }
@@ -1179,21 +1332,22 @@ public class DataStore {
     }
 
     /**
-     * Scales the university data to meet professional thresholds (20-40 students per dept)
+     * Scales the university data to meet professional thresholds (20-40 students
+     * per dept)
      */
     private void scaleData() {
         java.util.Random rand = new java.util.Random();
         String[] firstNames = {
-            "Ahmet", "Mehmet", "Ayşe", "Fatma", "Can", "Ece", "Burak", "Deniz", "Emre", "Selin", 
-            "Mert", "Zeynep", "Arda", "Pelin", "Kerem", "Gizem", "Oğuz", "Beren", "Kaan", "Duru",
-            "Tolga", "İrem", "Onur", "Melis", "Batuhan", "Buse", "Doruk", "Tuğba", "Berk", "Damla",
-            "Sinan", "Serra", "Utku", "Alara", "Yiğit", "Simge", "Emir", "Gökçe", "Bora", "Azra"
+                "Ahmet", "Mehmet", "Ayşe", "Fatma", "Can", "Ece", "Burak", "Deniz", "Emre", "Selin",
+                "Mert", "Zeynep", "Arda", "Pelin", "Kerem", "Gizem", "Oğuz", "Beren", "Kaan", "Duru",
+                "Tolga", "İrem", "Onur", "Melis", "Batuhan", "Buse", "Doruk", "Tuğba", "Berk", "Damla",
+                "Sinan", "Serra", "Utku", "Alara", "Yiğit", "Simge", "Emir", "Gökçe", "Bora", "Azra"
         };
         String[] lastNames = {
-            "Yılmaz", "Kaya", "Demir", "Çelik", "Yıldız", "Aydın", "Özdemir", "Arslan", "Doğan", "Kılıç",
-            "Aslan", "Çetin", "Öztürk", "Aksoy", "Polat", "Özkan", "Erdem", "Şahin", "Koç", "Kurt",
-            "Özcan", "Güneş", "Bulut", "Kaplan", "Yıldırım", "Şimşek", "Can", "Karadeniz", "Aktaş", "Yaman",
-            "Avcı", "Sarı", "Korkmaz", "Tekin", "Uysal", "Erten", "Yiğit", "Özbek", "Çakır", "Uzun"
+                "Yılmaz", "Kaya", "Demir", "Çelik", "Yıldız", "Aydın", "Özdemir", "Arslan", "Doğan", "Kılıç",
+                "Aslan", "Çetin", "Öztürk", "Aksoy", "Polat", "Özkan", "Erdem", "Şahin", "Koç", "Kurt",
+                "Özcan", "Güneş", "Bulut", "Kaplan", "Yıldırım", "Şimşek", "Can", "Karadeniz", "Aktaş", "Yaman",
+                "Avcı", "Sarı", "Korkmaz", "Tekin", "Uysal", "Erten", "Yiğit", "Özbek", "Çakır", "Uzun"
         };
 
         boolean dataChanged = false;
@@ -1209,7 +1363,7 @@ public class DataStore {
             // 2. Ensure 25-35 Students per dept with unique names
             long currentStudents = students.stream().filter(s -> s.getDepartment().equals(d.getCode())).count();
             int targetStudents = 25 + rand.nextInt(11);
-            
+
             while (currentStudents < targetStudents) {
                 String fName = firstNames[rand.nextInt(firstNames.length)];
                 String lName = lastNames[rand.nextInt(lastNames.length)];
@@ -1218,12 +1372,13 @@ public class DataStore {
                 // Strict uniqueness check for full names
                 final String searchName = fullName;
                 boolean duplicate = users.stream().anyMatch(u -> u.getFullName().equalsIgnoreCase(searchName));
-                if (duplicate) continue;
+                if (duplicate)
+                    continue;
 
                 String sid = InputValidator.generateStudentId(2023, d.getCode());
                 User u = new User(sid, "pass123", "Student", fullName, sid, d.getCode());
                 StudentProfile profile = new StudentProfile(sid, fullName, d.getCode(), 1, sid);
-                
+
                 users.add(u);
                 students.add(profile);
                 currentStudents++;
@@ -1232,20 +1387,21 @@ public class DataStore {
 
             // 3. Ensure 4 Instructors per dept
             long instructorCount = users.stream()
-                .filter(u -> "Instructor".equalsIgnoreCase(u.getRole()) && u.getReferenceId() != null && u.getReferenceId().startsWith(d.getCode()))
-                .count();
-            
+                    .filter(u -> "Instructor".equalsIgnoreCase(u.getRole()) && u.getReferenceId() != null
+                            && u.getReferenceId().startsWith(d.getCode()))
+                    .count();
+
             if (instructorCount < 4) {
-                for (int i = (int)instructorCount; i < 4; i++) {
+                for (int i = (int) instructorCount; i < 4; i++) {
                     String fName = firstNames[rand.nextInt(firstNames.length)];
                     String lName = lastNames[rand.nextInt(lastNames.length)];
                     String fullName = "Prof. " + fName + " " + lName;
-                    
-                    String instId = InputValidator.generateReferenceId("Instructor", (int)instructorCount + 1);
+
+                    String instId = InputValidator.generateReferenceId("Instructor", (int) instructorCount + 1);
                     String username = fName.toLowerCase() + "." + lName.toLowerCase() + (100 + rand.nextInt(900));
-                    
+
                     User u = new User(username, "pass123", "Instructor", fullName, instId, d.getCode());
-                    
+
                     users.add(u);
                     instructorCount++;
                     dataChanged = true;
@@ -1262,24 +1418,30 @@ public class DataStore {
     }
 
     /**
-     * Calculates the credit limit for a student based on academic performance and status
+     * Calculates the credit limit for a student based on academic performance and
+     * status
      */
     public int calculateCreditLimit(String username) {
         StudentProfile profile = findStudentProfileByUsername(username);
-        if (profile == null) return 30; // Default
+        if (profile == null)
+            return 30; // Default
 
         // 1. Double Major check (Highest priority)
-        if (profile.getSecondDepartment() != null && !profile.getSecondDepartment().isEmpty() && profile.getSecondYear() > 0) {
+        if (profile.getSecondDepartment() != null && !profile.getSecondDepartment().isEmpty()
+                && profile.getSecondYear() > 0) {
             return 45; // Double major limit
         }
 
         // 2. GPA check
         double gpa = calculateGPA(username);
-        if (gpa >= 3.5) return 40;
-        if (gpa >= 3.0) return 36;
-        
+        if (gpa >= 3.5)
+            return 40;
+        if (gpa >= 3.0)
+            return 36;
+
         // 3. Senior student check
-        if (profile.getYear() == 4) return 36;
+        if (profile.getYear() == 4)
+            return 36;
 
         return 30; // Standard limit
     }
@@ -1287,61 +1449,62 @@ public class DataStore {
     private void generateDeptCurriculum(Department d) {
         String code = d.getCode();
         String name = d.getName();
-        
+
         // Year-based templates (Year -> [[CourseSuffix, Name, ECTS], ...])
         Map<Integer, String[][]> yearCourses = new HashMap<>();
-        
+
         // General subjects for all (Year 1)
-        yearCourses.put(1, new String[][]{
-            {"101", "Introduction to " + name, "8"},
-            {"102", "Academic Writing & Ethics", "6"},
-            {"103", "Mathematics for " + name, "8"},
-            {"104", "Fundamental of Theory", "8"},
-            {"105", "Critical Thinking", "10"},
-            {"106", "University Life 101", "10"},
-            {"107", "Foreign Language I", "10"}
+        yearCourses.put(1, new String[][] {
+                { "101", "Introduction to " + name, "8" },
+                { "102", "Academic Writing & Ethics", "6" },
+                { "103", "Mathematics for " + name, "8" },
+                { "104", "Fundamental of Theory", "8" },
+                { "105", "Critical Thinking", "10" },
+                { "106", "University Life 101", "10" },
+                { "107", "Foreign Language I", "10" }
         }); // Total 60 ECTS
 
         // Specialization (Year 2)
-        yearCourses.put(2, new String[][]{
-            {"201", "Core Principles of " + name + " I", "10"},
-            {"202", "Core Principles of " + name + " II", "10"},
-            {"203", "Research Methods", "10"},
-            {"204", "Professional Communication", "10"},
-            {"205", "Ethics and " + name, "10"},
-            {"206", "History of " + name, "10"}
+        yearCourses.put(2, new String[][] {
+                { "201", "Core Principles of " + name + " I", "10" },
+                { "202", "Core Principles of " + name + " II", "10" },
+                { "203", "Research Methods", "10" },
+                { "204", "Professional Communication", "10" },
+                { "205", "Ethics and " + name, "10" },
+                { "206", "History of " + name, "10" }
         }); // Total 60 ECTS
 
         // Advanced (Year 3)
-        yearCourses.put(3, new String[][]{
-            {"301", "Advanced " + name + " I", "12"},
-            {"302", "Advanced " + name + " II", "12"},
-            {"303", "Interdisciplinary Studies", "12"},
-            {"304", "Practical Application Lab", "12"},
-            {"305", "Global Trends in " + name, "12"}
+        yearCourses.put(3, new String[][] {
+                { "301", "Advanced " + name + " I", "12" },
+                { "302", "Advanced " + name + " II", "12" },
+                { "303", "Interdisciplinary Studies", "12" },
+                { "304", "Practical Application Lab", "12" },
+                { "305", "Global Trends in " + name, "12" }
         }); // Total 60 ECTS
 
         // Graduation (Year 4)
-        yearCourses.put(4, new String[][]{
-            {"401", "Capstone Project Phase I", "15"},
-            {"402", "Capstone Project Phase II", "15"},
-            {"403", "Professional Internship", "20"},
-            {"404", "Graduation Seminar", "10"}
+        yearCourses.put(4, new String[][] {
+                { "401", "Capstone Project Phase I", "15" },
+                { "402", "Capstone Project Phase II", "15" },
+                { "403", "Professional Internship", "20" },
+                { "404", "Graduation Seminar", "10" }
         }); // Total 60 ECTS
 
         for (int year = 1; year <= 4; year++) {
             String[][] coursesForYear = yearCourses.get(year);
-            if (coursesForYear == null) continue;
-            
+            if (coursesForYear == null)
+                continue;
+
             for (String[] t : coursesForYear) {
                 String cCode = code + t[0];
                 String cName = t[1];
                 int ects = Integer.parseInt(t[2]);
-                
+
                 // Add Course (Instructor 1 of dept as placeholder)
                 Course c = new Course(cCode, cName, ects, 40, code + "I1");
                 addCourse(c);
-                
+
                 // Map to curriculum
                 addCurriculumMapping(new CurriculumMapping(code, year, cCode));
             }

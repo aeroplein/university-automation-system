@@ -29,7 +29,8 @@ public class InputValidator {
     }
 
     /**
-     * Validates student ID: not empty, numeric format, and satisfies the university algorithm
+     * Validates student ID: not empty, numeric format, and satisfies the university
+     * algorithm
      * Algorithm: 9 digits, starts with '20', sum of digits % 10 == 7
      */
     public static String validateStudentId(String studentId) {
@@ -65,43 +66,63 @@ public class InputValidator {
 
     /**
      * Generates a valid student ID based on year and department
-     * Algorithm: 20 + year(last 2) + deptCode(2) + random(2) + checksum_digit (Total 9 digits)
+     * Algorithm: 20 + year(last 2) + deptCode(2) + random(2) + checksum_digit
+     * (Total 9 digits)
      */
     public static String generateStudentId(int year, String deptCode) {
         // Use year and deptCode if possible, or just generate a valid 9-digit ID
         java.util.Random rand = new java.util.Random();
         String base = "20" + String.format("%02d", year % 100);
-        
+
         // Normalize deptCode to 2 digits deterministically
         int dCode = 0;
-        if (deptCode == null) deptCode = "GEN";
-        switch(deptCode.toUpperCase()) {
-            case "CS": dCode = 11; break;
-            case "IE": dCode = 22; break;
-            case "EE": dCode = 33; break;
-            case "ME": dCode = 44; break;
-            case "CE": dCode = 55; break;
-            case "BA": dCode = 66; break;
-            case "PSY": dCode = 77; break;
-            case "LAW": dCode = 88; break;
-            case "CEN": dCode = 10; break;
-            default: 
+        if (deptCode == null)
+            deptCode = "GEN";
+        switch (deptCode.toUpperCase()) {
+            case "CS":
+                dCode = 11;
+                break;
+            case "IE":
+                dCode = 22;
+                break;
+            case "EE":
+                dCode = 33;
+                break;
+            case "ME":
+                dCode = 44;
+                break;
+            case "CE":
+                dCode = 55;
+                break;
+            case "BA":
+                dCode = 66;
+                break;
+            case "PSY":
+                dCode = 77;
+                break;
+            case "LAW":
+                dCode = 88;
+                break;
+            case "CEN":
+                dCode = 10;
+                break;
+            default:
                 dCode = Math.abs(deptCode.hashCode() % 90) + 10;
         }
         base += String.format("%02d", dCode);
-        
+
         // Use 2 digits for serial to make base 8 digits total
         base += String.format("%02d", rand.nextInt(100));
-        
+
         // Find the 9th digit to satisfy sum % 10 == 7
         int sum = 0;
         for (char c : base.toCharArray()) {
             sum += Character.getNumericValue(c);
         }
-        
+
         int currentMod = sum % 10;
         int checkDigit = (7 - currentMod + 10) % 10;
-        
+
         return base + checkDigit;
     }
 
@@ -169,11 +190,63 @@ public class InputValidator {
      */
     public static String generateReferenceId(String role, int sequence) {
         String prefix = "ADM";
-        if ("Instructor".equalsIgnoreCase(role)) prefix = "INS";
-        else if ("Student".equalsIgnoreCase(role)) prefix = "STU";
-        
+        if ("Instructor".equalsIgnoreCase(role))
+            prefix = "INS";
+        else if ("Student".equalsIgnoreCase(role))
+            prefix = "STU";
+
         int year = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) % 100;
         // Enterprise format: PREFIX-YY-000 (e.g. INS-25-001)
         return String.format("%s-%02d-%03d", prefix, year, Math.max(1, sequence));
+    }
+
+    /**
+     * Enterprise-grade string normalization for Turkish characters.
+     * Converts characters like ç, ş, ü, ı, ö, ğ to their English counterparts.
+     */
+    public static String normalizeTurkish(String text) {
+        if (text == null) return null;
+        
+        StringBuilder sb = new StringBuilder(text.length());
+        for (char c : text.toCharArray()) {
+            switch (c) {
+                case 'ç': case 'Ç': sb.append('c'); break;
+                case 'ğ': case 'Ğ': sb.append('g'); break;
+                case 'ı': case 'I': case 'İ': sb.append('i'); break;
+                case 'ö': case 'Ö': sb.append('o'); break;
+                case 'ş': case 'Ş': sb.append('s'); break;
+                case 'ü': case 'Ü': sb.append('u'); break;
+                default: sb.append(c); break;
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Generates a username in name.surname format from a full name
+     */
+    public static String generateUsername(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty()) {
+            return "user" + System.currentTimeMillis() % 1000;
+        }
+        
+        // Remove prefixes like "Prof." or "Dr."
+        String cleanName = fullName.replace("Prof. ", "").replace("Dr. ", "").trim().toLowerCase();
+        
+        // Use enterprise normalization
+        cleanName = normalizeTurkish(cleanName);
+                           
+        String[] parts = cleanName.split("\\s+");
+        if (parts.length >= 2) {
+            String firstName = parts[0];
+            String lastName = parts[parts.length - 1];
+            
+            // If name and surname are the same (e.g. "Ali Ali"), suffix the name
+            if (firstName.equals(lastName)) {
+                return firstName + ".user" + (System.currentTimeMillis() % 100);
+            }
+            return firstName + "." + lastName;
+        }
+        return parts[0];
     }
 }
