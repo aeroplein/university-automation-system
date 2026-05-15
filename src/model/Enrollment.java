@@ -6,14 +6,21 @@ package model;
 public class Enrollment {
     private String studentUsername;
     private String courseCode;
+    private String status; // PENDING, APPROVED
 
     // Constructors
     public Enrollment() {
+        this.status = "APPROVED";
     }
 
     public Enrollment(String studentUsername, String courseCode) {
+        this(studentUsername, courseCode, "APPROVED");
+    }
+
+    public Enrollment(String studentUsername, String courseCode, String status) {
         this.studentUsername = studentUsername;
         this.courseCode = courseCode;
+        this.status = status;
     }
 
     // Getters and Setters
@@ -33,14 +40,23 @@ public class Enrollment {
         this.courseCode = courseCode;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     /**
      * Converts enrollment data to CSV format for file persistence
-     * Format: studentUsername,courseCode
+     * Format: studentUsername,courseCode,status
      */
     public String toFileString() {
-        return String.format("%s,%s",
+        return String.format("%s,%s,%s",
                 studentUsername != null ? studentUsername : "",
-                courseCode != null ? courseCode : "");
+                courseCode != null ? courseCode : "",
+                status != null ? status : "APPROVED");
     }
 
     /**
@@ -51,11 +67,13 @@ public class Enrollment {
             return null;
         }
         
-        String[] parts = line.split(",", 2);
+        String[] parts = line.split(",");
         if (parts.length >= 2) {
+            String status = (parts.length >= 3) ? parts[2].trim() : "APPROVED";
             return new Enrollment(
                     parts[0].trim(),
-                    parts[1].trim()
+                    parts[1].trim(),
+                    status
             );
         }
         return null;
@@ -66,6 +84,7 @@ public class Enrollment {
         return "Enrollment{" +
                 "studentUsername='" + studentUsername + '\'' +
                 ", courseCode='" + courseCode + '\'' +
+                ", status='" + status + '\'' +
                 '}';
     }
 

@@ -33,3 +33,193 @@ IE403,Ergonomics,3,25,huseyin.arslan
 CS302,Database Systems,4,45,elif.dogan
 CS402,Operating Systems,4,40,elif.dogan
 CS403,Computer Networks,3,35,elif.dogan
+CE101,Introduction to Civil Engineering,6,40,CEI1
+CE102,Principles of Civil Engineering,6,40,CEI1
+CE201,Advanced Civil Engineering,7,40,CEI1
+CE202,Civil Engineering Methodology,5,40,CEI1
+CE100,Academic Orientation,2,40,CEI1
+CEN101,Introduction to Computer Engineering,6,40,CENI1
+CEN102,Principles of Computer Engineering,6,40,CENI1
+CEN201,Advanced Computer Engineering,7,40,CENI1
+CEN202,Computer Engineering Methodology,5,40,CENI1
+CEN100,Academic Orientation,2,40,CENI1
+MBG101,Introduction to Molecular Biology and Genetics,6,40,MBGI1
+MBG102,Principles of Molecular Biology and Genetics,6,40,MBGI1
+MBG201,Advanced Molecular Biology and Genetics,7,40,MBGI1
+MBG202,Molecular Biology and Genetics Methodology,5,40,MBGI1
+MBG100,Academic Orientation,2,40,MBGI1
+BA101,Introduction to Business Administrations,6,40,BAI1
+BA102,Principles of Business Administrations,6,40,BAI1
+BA201,Advanced Business Administrations,7,40,BAI1
+BA202,Business Administrations Methodology,5,40,BAI1
+BA100,Academic Orientation,2,40,BAI1
+PSY101,Introduction to Psychology,6,40,PSYI1
+PSY102,Principles of Psychology,6,40,PSYI1
+PSY201,Advanced Psychology,7,40,PSYI1
+PSY202,Psychology Methodology,5,40,PSYI1
+PSY100,Academic Orientation,2,40,PSYI1
+CS103,Mathematics for Computer Science,8,40,CSI1
+CS104,Fundamental of Theory,8,40,CSI1
+CS105,Critical Thinking,10,40,CSI1
+CS106,University Life 101,10,40,CSI1
+CS107,Foreign Language I,10,40,CSI1
+CS202,Core Principles of Computer Science II,10,40,CSI1
+CS203,Research Methods,10,40,CSI1
+CS204,Professional Communication,10,40,CSI1
+CS205,Ethics and Computer Science,10,40,CSI1
+CS206,History of Computer Science,10,40,CSI1
+CS303,Interdisciplinary Studies,12,40,CSI1
+CS304,Practical Application Lab,12,40,CSI1
+CS305,Global Trends in Computer Science,12,40,CSI1
+CS404,Graduation Seminar,10,40,CSI1
+EE103,Mathematics for Electrical Engineering,8,40,EEI1
+EE104,Fundamental of Theory,8,40,EEI1
+EE105,Critical Thinking,10,40,EEI1
+EE106,University Life 101,10,40,EEI1
+EE107,Foreign Language I,10,40,EEI1
+EE203,Research Methods,10,40,EEI1
+EE204,Professional Communication,10,40,EEI1
+EE205,Ethics and Electrical Engineering,10,40,EEI1
+EE206,History of Electrical Engineering,10,40,EEI1
+EE303,Interdisciplinary Studies,12,40,EEI1
+EE304,Practical Application Lab,12,40,EEI1
+EE305,Global Trends in Electrical Engineering,12,40,EEI1
+EE404,Graduation Seminar,10,40,EEI1
+ME103,Mathematics for Mechanical Engineering,8,40,MEI1
+ME104,Fundamental of Theory,8,40,MEI1
+ME105,Critical Thinking,10,40,MEI1
+ME106,University Life 101,10,40,MEI1
+ME107,Foreign Language I,10,40,MEI1
+ME203,Research Methods,10,40,MEI1
+ME204,Professional Communication,10,40,MEI1
+ME205,Ethics and Mechanical Engineering,10,40,MEI1
+ME206,History of Mechanical Engineering,10,40,MEI1
+ME303,Interdisciplinary Studies,12,40,MEI1
+ME304,Practical Application Lab,12,40,MEI1
+ME305,Global Trends in Mechanical Engineering,12,40,MEI1
+ME404,Graduation Seminar,10,40,MEI1
+IE102,Academic Writing & Ethics,6,40,IEI1
+IE103,Mathematics for Industrial Engineering,8,40,IEI1
+IE104,Fundamental of Theory,8,40,IEI1
+IE105,Critical Thinking,10,40,IEI1
+IE106,University Life 101,10,40,IEI1
+IE107,Foreign Language I,10,40,IEI1
+IE203,Research Methods,10,40,IEI1
+IE204,Professional Communication,10,40,IEI1
+IE205,Ethics and Industrial Engineering,10,40,IEI1
+IE206,History of Industrial Engineering,10,40,IEI1
+IE304,Practical Application Lab,12,40,IEI1
+IE305,Global Trends in Industrial Engineering,12,40,IEI1
+IE404,Graduation Seminar,10,40,IEI1
+CE103,Mathematics for Civil Engineering,8,40,CEI1
+CE104,Fundamental of Theory,8,40,CEI1
+CE105,Critical Thinking,10,40,CEI1
+CE106,University Life 101,10,40,CEI1
+CE107,Foreign Language I,10,40,CEI1
+CE203,Research Methods,10,40,CEI1
+CE204,Professional Communication,10,40,CEI1
+CE205,Ethics and Civil Engineering,10,40,CEI1
+CE206,History of Civil Engineering,10,40,CEI1
+CE301,Advanced Civil Engineering I,12,40,CEI1
+CE302,Advanced Civil Engineering II,12,40,CEI1
+CE303,Interdisciplinary Studies,12,40,CEI1
+CE304,Practical Application Lab,12,40,CEI1
+CE305,Global Trends in Civil Engineering,12,40,CEI1
+CE401,Capstone Project Phase I,15,40,CEI1
+CE402,Capstone Project Phase II,15,40,CEI1
+CE403,Professional Internship,20,40,CEI1
+CE404,Graduation Seminar,10,40,CEI1
+CEN103,Mathematics for Computer Engineering,8,40,CENI1
+CEN104,Fundamental of Theory,8,40,CENI1
+CEN105,Critical Thinking,10,40,CENI1
+CEN106,University Life 101,10,40,CENI1
+CEN107,Foreign Language I,10,40,CENI1
+CEN203,Research Methods,10,40,CENI1
+CEN204,Professional Communication,10,40,CENI1
+CEN205,Ethics and Computer Engineering,10,40,CENI1
+CEN206,History of Computer Engineering,10,40,CENI1
+CEN301,Advanced Computer Engineering I,12,40,CENI1
+CEN302,Advanced Computer Engineering II,12,40,CENI1
+CEN303,Interdisciplinary Studies,12,40,CENI1
+CEN304,Practical Application Lab,12,40,CENI1
+CEN305,Global Trends in Computer Engineering,12,40,CENI1
+CEN401,Capstone Project Phase I,15,40,CENI1
+CEN402,Capstone Project Phase II,15,40,CENI1
+CEN403,Professional Internship,20,40,CENI1
+CEN404,Graduation Seminar,10,40,CENI1
+MBG103,Mathematics for Molecular Biology and Genetics,8,40,MBGI1
+MBG104,Fundamental of Theory,8,40,MBGI1
+MBG105,Critical Thinking,10,40,MBGI1
+MBG106,University Life 101,10,40,MBGI1
+MBG107,Foreign Language I,10,40,MBGI1
+MBG203,Research Methods,10,40,MBGI1
+MBG204,Professional Communication,10,40,MBGI1
+MBG205,Ethics and Molecular Biology and Genetics,10,40,MBGI1
+MBG206,History of Molecular Biology and Genetics,10,40,MBGI1
+MBG301,Advanced Molecular Biology and Genetics I,12,40,MBGI1
+MBG302,Advanced Molecular Biology and Genetics II,12,40,MBGI1
+MBG303,Interdisciplinary Studies,12,40,MBGI1
+MBG304,Practical Application Lab,12,40,MBGI1
+MBG305,Global Trends in Molecular Biology and Genetics,12,40,MBGI1
+MBG401,Capstone Project Phase I,15,40,MBGI1
+MBG402,Capstone Project Phase II,15,40,MBGI1
+MBG403,Professional Internship,20,40,MBGI1
+MBG404,Graduation Seminar,10,40,MBGI1
+BA103,Mathematics for Business Administrations,8,40,BAI1
+BA104,Fundamental of Theory,8,40,BAI1
+BA105,Critical Thinking,10,40,BAI1
+BA106,University Life 101,10,40,BAI1
+BA107,Foreign Language I,10,40,BAI1
+BA203,Research Methods,10,40,BAI1
+BA204,Professional Communication,10,40,BAI1
+BA205,Ethics and Business Administrations,10,40,BAI1
+BA206,History of Business Administrations,10,40,BAI1
+BA301,Advanced Business Administrations I,12,40,BAI1
+BA302,Advanced Business Administrations II,12,40,BAI1
+BA303,Interdisciplinary Studies,12,40,BAI1
+BA304,Practical Application Lab,12,40,BAI1
+BA305,Global Trends in Business Administrations,12,40,BAI1
+BA401,Capstone Project Phase I,15,40,BAI1
+BA402,Capstone Project Phase II,15,40,BAI1
+BA403,Professional Internship,20,40,BAI1
+BA404,Graduation Seminar,10,40,BAI1
+PSY103,Mathematics for Psychology,8,40,PSYI1
+PSY104,Fundamental of Theory,8,40,PSYI1
+PSY105,Critical Thinking,10,40,PSYI1
+PSY106,University Life 101,10,40,PSYI1
+PSY107,Foreign Language I,10,40,PSYI1
+PSY203,Research Methods,10,40,PSYI1
+PSY204,Professional Communication,10,40,PSYI1
+PSY205,Ethics and Psychology,10,40,PSYI1
+PSY206,History of Psychology,10,40,PSYI1
+PSY301,Advanced Psychology I,12,40,PSYI1
+PSY302,Advanced Psychology II,12,40,PSYI1
+PSY303,Interdisciplinary Studies,12,40,PSYI1
+PSY304,Practical Application Lab,12,40,PSYI1
+PSY305,Global Trends in Psychology,12,40,PSYI1
+PSY401,Capstone Project Phase I,15,40,PSYI1
+PSY402,Capstone Project Phase II,15,40,PSYI1
+PSY403,Professional Internship,20,40,PSYI1
+PSY404,Graduation Seminar,10,40,PSYI1
+F101,Introduction to f,8,40,FI1
+F102,Academic Writing & Ethics,6,40,FI1
+F103,Mathematics for f,8,40,FI1
+F104,Fundamental of Theory,8,40,FI1
+F105,Critical Thinking,10,40,FI1
+F106,University Life 101,10,40,FI1
+F107,Foreign Language I,10,40,FI1
+F201,Core Principles of f I,10,40,FI1
+F202,Core Principles of f II,10,40,FI1
+F203,Research Methods,10,40,FI1
+F204,Professional Communication,10,40,FI1
+F205,Ethics and f,10,40,FI1
+F206,History of f,10,40,FI1
+F301,Advanced f I,12,40,FI1
+F302,Advanced f II,12,40,FI1
+F303,Interdisciplinary Studies,12,40,FI1
+F304,Practical Application Lab,12,40,FI1
+F305,Global Trends in f,12,40,FI1
+F401,Capstone Project Phase I,15,40,FI1
+F402,Capstone Project Phase II,15,40,FI1
+F403,Professional Internship,20,40,FI1
+F404,Graduation Seminar,10,40,FI1

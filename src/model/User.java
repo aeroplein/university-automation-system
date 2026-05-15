@@ -10,17 +10,19 @@ public class User {
     private String role; // "Admin", "Instructor", "Student"
     private String fullName;
     private String referenceId; // Links to StudentProfile.studentId or instructor identifier
+    private String department; // Academic department (e.g., "CENG", "EEE")
 
     // Constructors
     public User() {
     }
 
-    public User(String username, String password, String role, String fullName, String referenceId) {
+    public User(String username, String password, String role, String fullName, String referenceId, String department) {
         this.username = username;
         this.password = password;
         this.role = role;
         this.fullName = fullName;
         this.referenceId = referenceId;
+        this.department = department;
     }
 
     // Getters and Setters
@@ -64,17 +66,26 @@ public class User {
         this.referenceId = referenceId;
     }
 
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
     /**
      * Converts user data to CSV format for file persistence
-     * Format: username,password,role,fullName,referenceId
+     * Format: username,password,role,fullName,referenceId,department
      */
     public String toFileString() {
-        return String.format("%s,%s,%s,%s,%s",
+        return String.format("%s,%s,%s,%s,%s,%s",
                 username != null ? username : "",
                 password != null ? password : "",
                 role != null ? role : "",
                 fullName != null ? fullName.replace(",", ";") : "",
-                referenceId != null ? referenceId : "");
+                referenceId != null ? referenceId : "",
+                department != null ? department : "");
     }
 
     /**
@@ -85,14 +96,25 @@ public class User {
             return null;
         }
         
-        String[] parts = line.split(",", 5);
-        if (parts.length >= 5) {
+        String[] parts = line.split(",", 6);
+        if (parts.length >= 6) {
             return new User(
                     parts[0].trim(),
                     parts[1].trim(),
                     parts[2].trim(),
                     parts[3].replace(";", ",").trim(),
-                    parts[4].trim()
+                    parts[4].trim(),
+                    parts[5].trim()
+            );
+        } else if (parts.length == 5) {
+            // Backward compatibility
+            return new User(
+                    parts[0].trim(),
+                    parts[1].trim(),
+                    parts[2].trim(),
+                    parts[3].replace(";", ",").trim(),
+                    parts[4].trim(),
+                    ""
             );
         }
         return null;

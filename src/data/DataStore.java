@@ -1,10 +1,13 @@
 package data;
 
 import model.*;
+import util.InputValidator;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -105,7 +108,7 @@ public class DataStore {
      */
     private void createDefaultData() {
         // Create default admin
-        User admin = new User("admin", "admin123", "Admin", "System Administrator", "ADMIN001");
+        User admin = new User("admin", "admin123", "Admin", "System Administrator", "ADMIN001", "");
         users.add(admin);
         saveUsers();
         System.out.println("Default admin created: username=admin, password=admin123");
@@ -208,8 +211,9 @@ public class DataStore {
      */
     public User findUser(String username) {
         if (username == null) return null;
+        String target = username.trim();
         return users.stream()
-                .filter(u -> u.getUsername().equals(username))
+                .filter(u -> u.getUsername().equalsIgnoreCase(target))
                 .findFirst()
                 .orElse(null);
     }
@@ -217,34 +221,37 @@ public class DataStore {
     /**
      * Add a new user
      */
-    public boolean addUser(User user) {
+    public int addUser(User user) {
         if (user == null || user.getUsername() == null || user.getUsername().trim().isEmpty()) {
-            return false;
+            return 0; // Invalid input
         }
 
-        // Check if username already exists
+        user.setUsername(user.getUsername().trim());
+
+        // Check if username already exists (case-insensitive)
         if (findUser(user.getUsername()) != null) {
-            return false;
+            return -1; // Already exists
         }
 
         users.add(user);
         saveUsers();
-        return true;
+        return 1; // Success
     }
 
-    /**
     /**
      * Update an existing user.
      * Returns: 1 if updated, 0 if no changes, -1 if not found.
      */
     public int updateUser(User user) {
         if (user == null || user.getUsername() == null) return -1;
-        User existing = findUser(user.getUsername());
+        String target = user.getUsername().trim();
+        User existing = findUser(target);
         if (existing == null) return -1;
 
         boolean changed = !existing.getPassword().equals(user.getPassword()) ||
                          !existing.getRole().equals(user.getRole()) ||
                          !existing.getFullName().equals(user.getFullName()) ||
+                         !existing.getDepartment().equals(user.getDepartment()) ||
                          (existing.getReferenceId() == null ? user.getReferenceId() != null : !existing.getReferenceId().equals(user.getReferenceId()));
         
         if (!changed) return 0;
@@ -252,6 +259,7 @@ public class DataStore {
         existing.setPassword(user.getPassword());
         existing.setRole(user.getRole());
         existing.setFullName(user.getFullName());
+        existing.setDepartment(user.getDepartment());
         existing.setReferenceId(user.getReferenceId());
         saveUsers();
         return 1;
@@ -382,13 +390,30 @@ public class DataStore {
     }
 
     /**
-     * Remove a student profile
+     * Delete a student by ID, including cascade delete for User and records
      */
-    public boolean removeStudentProfile(String username) {
-        if (username == null) return false;
-        boolean removed = students.removeIf(s -> s.getUsername().equals(username));
-        if (removed) saveStudents();
-        return removed;
+    public boolean deleteStudent(String studentId) {
+        if (studentId == null) return false;
+        StudentProfile profile = findStudentProfileById(studentId);
+        if (profile == null) return false;
+
+        String username = profile.getUsername();
+        if (username != null && findUser(username) != null) {
+            // Use existing cascade delete logic in deleteUser
+            return deleteUser(username);
+        } else {
+            // Orphan profile: delete manually
+            boolean removed = students.removeIf(s -> s.getStudentId().equals(studentId));
+            if (removed) {
+                saveStudents();
+                // Also clean up enrollments/grades just in case
+                enrollments.removeIf(e -> e.getStudentUsername().equals(username));
+                grades.removeIf(g -> g.getStudentUsername().equals(username));
+                saveEnrollments();
+                saveGrades();
+            }
+            return removed;
+        }
     }
 
     // ==================== Course Management ====================
@@ -420,6 +445,30 @@ public class DataStore {
         courses.add(course);
         saveCourses();
         return true;
+    }
+
+    /**
+     * Update an existing course.
+     * Returns: 1 if updated, 0 if no changes, -1 if not found.
+     */
+    public int updateCourse(Course course) {
+        if (course == null || course.getCourseCode() == null) return -1;
+        Course existing = findCourse(course.getCourseCode());
+        if (existing == null) return -1;
+
+        boolean changed = !existing.getCourseName().equals(course.getCourseName()) ||
+                         existing.getCredit() != course.getCredit() ||
+                         existing.getQuota() != course.getQuota() ||
+                         !existing.getInstructorUsername().equals(course.getInstructorUsername());
+        
+        if (!changed) return 0;
+
+        existing.setCourseName(course.getCourseName());
+        existing.setCredit(course.getCredit());
+        existing.setQuota(course.getQuota());
+        existing.setInstructorUsername(course.getInstructorUsername());
+        saveCourses();
+        return 1;
     }
 
     /**
@@ -495,6 +544,10 @@ public class DataStore {
     }
 
     public boolean enrollStudent(String studentUsername, String courseCode) {
+        return enrollStudent(studentUsername, courseCode, "APPROVED");
+    }
+
+    public boolean enrollStudent(String studentUsername, String courseCode, String status) {
         // Validate inputs
         if (studentUsername == null || courseCode == null) {
             return false;
@@ -530,11 +583,73 @@ public class DataStore {
             return false;
         }
 
+        // Check ECTS Limit
+        int courseECTS = course.getCredit();
+        if (getStudentTotalCredits(studentUsername) + courseECTS > calculateCreditLimit(studentUsername)) {
+            return false;
+        }
+
         // Add enrollment
-        Enrollment enrollment = new Enrollment(studentUsername, courseCode);
+        Enrollment enrollment = new Enrollment(studentUsername, courseCode, status);
         enrollments.add(enrollment);
         saveEnrollments();
         return true;
+    }
+
+
+    public boolean requestEnrollment(String studentUsername, String courseCode) {
+        return enrollStudent(studentUsername, courseCode, "PENDING");
+    }
+
+    public boolean approveRequest(String studentUsername, String courseCode) {
+        Enrollment enr = enrollments.stream()
+                .filter(e -> e.getStudentUsername().equals(studentUsername) && e.getCourseCode().equals(courseCode))
+                .findFirst().orElse(null);
+        if (enr != null && "PENDING".equals(enr.getStatus())) {
+            enr.setStatus("APPROVED");
+            saveEnrollments();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean rejectRequest(String studentUsername, String courseCode) {
+        boolean removed = enrollments.removeIf(e -> 
+            e.getStudentUsername().equals(studentUsername) && 
+            e.getCourseCode().equals(courseCode) && 
+            "PENDING".equals(e.getStatus()));
+        if (removed) saveEnrollments();
+        return removed;
+    }
+
+    public void bulkEnroll(String deptCode, int year) {
+        List<StudentProfile> targets = students.stream()
+                .filter(s -> s.getDepartment().equalsIgnoreCase(deptCode) && s.getYear() == year)
+                .collect(Collectors.toList());
+        
+        List<String> curriculumCourses = curriculumMappings.stream()
+                .filter(m -> m.getDepartmentCode().equalsIgnoreCase(deptCode) && m.getYear() == year)
+                .map(CurriculumMapping::getCourseCode)
+                .collect(Collectors.toList());
+
+        for (StudentProfile s : targets) {
+            for (String cCode : curriculumCourses) {
+                // If student already has a PENDING request, upgrade it to APPROVED
+                Enrollment existing = enrollments.stream()
+                        .filter(e -> e.getStudentUsername().equals(s.getUsername()) && e.getCourseCode().equals(cCode))
+                        .findFirst().orElse(null);
+                
+                if (existing != null) {
+                    if ("PENDING".equals(existing.getStatus())) {
+                        existing.setStatus("APPROVED");
+                        saveEnrollments();
+                    }
+                } else {
+                    // Normal enrollment as APPROVED
+                    enrollStudent(s.getUsername(), cCode, "APPROVED");
+                }
+            }
+        }
     }
 
     /**
@@ -1055,54 +1170,94 @@ public class DataStore {
 
         return codes;
     }
+    public List<Faculty> getAllFaculties() {
+        return faculties;
+    }
+
+    public List<CurriculumMapping> getAllCurriculumMappings() {
+        return curriculumMappings;
+    }
 
     /**
      * Scales the university data to meet professional thresholds (20-40 students per dept)
      */
     private void scaleData() {
-        Random rand = new Random();
-        String[] firstNames = {"Ahmet", "Mehmet", "Ayşe", "Fatma", "Can", "Ece", "Burak", "Deniz", "Emre", "Selin", "Mert", "Zeynep", "Arda", "Pelin", "Kerem", "Gizem", "Oğuz", "Beren", "Kaan", "Duru"};
-        String[] lastNames = {"Yılmaz", "Kaya", "Demir", "Çelik", "Öztürk", "Arslan", "Doğan", "Kılıç", "Aydın", "Yıldız", "Özkan", "Şahin", "Polat", "Güneş", "Bulut", "Yavuz", "Aksoy"};
+        java.util.Random rand = new java.util.Random();
+        String[] firstNames = {
+            "Ahmet", "Mehmet", "Ayşe", "Fatma", "Can", "Ece", "Burak", "Deniz", "Emre", "Selin", 
+            "Mert", "Zeynep", "Arda", "Pelin", "Kerem", "Gizem", "Oğuz", "Beren", "Kaan", "Duru",
+            "Tolga", "İrem", "Onur", "Melis", "Batuhan", "Buse", "Doruk", "Tuğba", "Berk", "Damla",
+            "Sinan", "Serra", "Utku", "Alara", "Yiğit", "Simge", "Emir", "Gökçe", "Bora", "Azra"
+        };
+        String[] lastNames = {
+            "Yılmaz", "Kaya", "Demir", "Çelik", "Yıldız", "Aydın", "Özdemir", "Arslan", "Doğan", "Kılıç",
+            "Aslan", "Çetin", "Öztürk", "Aksoy", "Polat", "Özkan", "Erdem", "Şahin", "Koç", "Kurt",
+            "Özcan", "Güneş", "Bulut", "Kaplan", "Yıldırım", "Şimşek", "Can", "Karadeniz", "Aktaş", "Yaman",
+            "Avcı", "Sarı", "Korkmaz", "Tekin", "Uysal", "Erten", "Yiğit", "Özbek", "Çakır", "Uzun"
+        };
 
         boolean dataChanged = false;
 
         for (Department d : departments) {
-            long studentCount = students.stream().filter(s -> s.getDepartment().equals(d.getName())).count();
-            if (studentCount < 25) {
-                int toAdd = (int) (25 + rand.nextInt(11) - studentCount);
-                for (int i = 0; i < toAdd; i++) {
-                    String fname = firstNames[rand.nextInt(firstNames.length)];
-                    String lname = lastNames[rand.nextInt(lastNames.length)];
-                    String username = fname.toLowerCase() + "." + lname.toLowerCase() + rand.nextInt(10000);
-                    int year = rand.nextInt(4) + 1;
-                    int entranceYear = 2025 - year + 1;
-                    String sid = util.InputValidator.generateStudentId(entranceYear, d.getCode());
-                    
-                    User u = new User(username, "student123", "STUDENT", fname + " " + lname, sid);
-                    if (addUser(u)) {
-                        addStudentProfile(new StudentProfile(sid, u.getFullName(), d.getName(), year, username));
-                        dataChanged = true;
-                    }
-                }
+            // 1. Ensure ECTS-compliant courses (Min 20 courses per dept)
+            long courseCount = courses.stream().filter(c -> c.getCourseCode().startsWith(d.getCode())).count();
+            if (courseCount < 20) {
+                generateDeptCurriculum(d);
+                dataChanged = true;
             }
+
+            // 2. Ensure 25-35 Students per dept with unique names
+            long currentStudents = students.stream().filter(s -> s.getDepartment().equals(d.getCode())).count();
+            int targetStudents = 25 + rand.nextInt(11);
             
-            // Ensure 4 instructors per dept
-            long instructorCount = users.stream().filter(u -> "INSTRUCTOR".equals(u.getRole()) && u.getReferenceId() != null && u.getReferenceId().startsWith(d.getCode())).count();
+            while (currentStudents < targetStudents) {
+                String fName = firstNames[rand.nextInt(firstNames.length)];
+                String lName = lastNames[rand.nextInt(lastNames.length)];
+                String fullName = fName + " " + lName;
+
+                // Strict uniqueness check for full names
+                final String searchName = fullName;
+                boolean duplicate = users.stream().anyMatch(u -> u.getFullName().equalsIgnoreCase(searchName));
+                if (duplicate) continue;
+
+                String sid = InputValidator.generateStudentId(2023, d.getCode());
+                User u = new User(sid, "pass123", "Student", fullName, sid, d.getCode());
+                StudentProfile profile = new StudentProfile(sid, fullName, d.getCode(), 1, sid);
+                
+                users.add(u);
+                students.add(profile);
+                currentStudents++;
+                dataChanged = true;
+            }
+
+            // 3. Ensure 4 Instructors per dept
+            long instructorCount = users.stream()
+                .filter(u -> "Instructor".equalsIgnoreCase(u.getRole()) && u.getReferenceId() != null && u.getReferenceId().startsWith(d.getCode()))
+                .count();
+            
             if (instructorCount < 4) {
                 for (int i = (int)instructorCount; i < 4; i++) {
-                    String fname = firstNames[rand.nextInt(firstNames.length)];
-                    String lname = lastNames[rand.nextInt(lastNames.length)];
-                    String username = "prof." + fname.toLowerCase() + "." + (100 + rand.nextInt(900));
-                    User u = new User(username, "pass123", "INSTRUCTOR", fname + " " + lname, d.getCode() + "I" + (i+1));
-                    addUser(u);
+                    String fName = firstNames[rand.nextInt(firstNames.length)];
+                    String lName = lastNames[rand.nextInt(lastNames.length)];
+                    String fullName = "Prof. " + fName + " " + lName;
+                    
+                    String instId = InputValidator.generateReferenceId("Instructor", (int)instructorCount + 1);
+                    String username = fName.toLowerCase() + "." + lName.toLowerCase() + (100 + rand.nextInt(900));
+                    
+                    User u = new User(username, "pass123", "Instructor", fullName, instId, d.getCode());
+                    
+                    users.add(u);
+                    instructorCount++;
                     dataChanged = true;
                 }
             }
         }
-        
+
         if (dataChanged) {
             saveUsers();
             saveStudents();
+            saveCourses();
+            saveCurriculum();
         }
     }
 
@@ -1129,13 +1284,79 @@ public class DataStore {
         return 30; // Standard limit
     }
 
-    private double calculateGPA(String username) {
-        List<GradeRecord> studentGrades = grades.stream()
-            .filter(g -> g.getStudentUsername().equals(username))
-            .collect(Collectors.toList());
-        if (studentGrades.isEmpty()) return 0.0;
+    private void generateDeptCurriculum(Department d) {
+        String code = d.getCode();
+        String name = d.getName();
         
-        double total = studentGrades.stream().mapToDouble(GradeRecord::getGradeValue).sum();
-        return total / studentGrades.size() / 25.0; // Assuming 0-100 scale to 0-4
+        // Year-based templates (Year -> [[CourseSuffix, Name, ECTS], ...])
+        Map<Integer, String[][]> yearCourses = new HashMap<>();
+        
+        // General subjects for all (Year 1)
+        yearCourses.put(1, new String[][]{
+            {"101", "Introduction to " + name, "8"},
+            {"102", "Academic Writing & Ethics", "6"},
+            {"103", "Mathematics for " + name, "8"},
+            {"104", "Fundamental of Theory", "8"},
+            {"105", "Critical Thinking", "10"},
+            {"106", "University Life 101", "10"},
+            {"107", "Foreign Language I", "10"}
+        }); // Total 60 ECTS
+
+        // Specialization (Year 2)
+        yearCourses.put(2, new String[][]{
+            {"201", "Core Principles of " + name + " I", "10"},
+            {"202", "Core Principles of " + name + " II", "10"},
+            {"203", "Research Methods", "10"},
+            {"204", "Professional Communication", "10"},
+            {"205", "Ethics and " + name, "10"},
+            {"206", "History of " + name, "10"}
+        }); // Total 60 ECTS
+
+        // Advanced (Year 3)
+        yearCourses.put(3, new String[][]{
+            {"301", "Advanced " + name + " I", "12"},
+            {"302", "Advanced " + name + " II", "12"},
+            {"303", "Interdisciplinary Studies", "12"},
+            {"304", "Practical Application Lab", "12"},
+            {"305", "Global Trends in " + name, "12"}
+        }); // Total 60 ECTS
+
+        // Graduation (Year 4)
+        yearCourses.put(4, new String[][]{
+            {"401", "Capstone Project Phase I", "15"},
+            {"402", "Capstone Project Phase II", "15"},
+            {"403", "Professional Internship", "20"},
+            {"404", "Graduation Seminar", "10"}
+        }); // Total 60 ECTS
+
+        for (int year = 1; year <= 4; year++) {
+            String[][] coursesForYear = yearCourses.get(year);
+            if (coursesForYear == null) continue;
+            
+            for (String[] t : coursesForYear) {
+                String cCode = code + t[0];
+                String cName = t[1];
+                int ects = Integer.parseInt(t[2]);
+                
+                // Add Course (Instructor 1 of dept as placeholder)
+                Course c = new Course(cCode, cName, ects, 40, code + "I1");
+                addCourse(c);
+                
+                // Map to curriculum
+                addCurriculumMapping(new CurriculumMapping(code, year, cCode));
+            }
+        }
+    }
+
+    public int getStudentTotalCredits(String username) {
+        List<Enrollment> studentEnrollments = getEnrollmentsByStudent(username);
+        int totalCredits = 0;
+        for (Enrollment e : studentEnrollments) {
+            Course c = findCourse(e.getCourseCode());
+            if (c != null) {
+                totalCredits += c.getCredit();
+            }
+        }
+        return totalCredits;
     }
 }

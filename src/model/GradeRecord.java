@@ -65,7 +65,13 @@ public class GradeRecord {
      * Converts numerical grade to letter grade
      */
     public String getLetterGrade() {
-        double avg = calculateAverage();
+        return calculateLetterGradeStatic(calculateAverage());
+    }
+
+    /**
+     * Static utility to convert numerical grade to letter grade
+     */
+    public static String calculateLetterGradeStatic(double avg) {
         if (avg >= 90) return "AA";
         else if (avg >= 85) return "BA";
         else if (avg >= 80) return "BB";

@@ -59,9 +59,9 @@ public class ComprehensiveSystemTest {
         startModule("IDENTITY & AUTHENTICATION");
         
         // 1. User Creation
-        User u = new User("stest_user", "pass123", "Student", "System Test", "T001");
-        check(ds.addUser(u), "Should allow creating a unique test user");
-        check(!ds.addUser(u), "Should block duplicate usernames");
+        User u = new User("stest_user", "pass123", "Student", "System Test", "T001", "CS");
+        check(ds.addUser(u) == 1, "Should allow creating a unique test user");
+        check(ds.addUser(u) == -1, "Should block duplicate usernames");
         
         // 2. Authentication
         User auth = ds.authenticate("stest_user", "pass123");
@@ -171,7 +171,7 @@ public class ComprehensiveSystemTest {
         ds.removeCourse("G_AA");
         ds.removeCourse("G_FF");
 
-        ds.addUser(new User(user, "p", "Student", "Grader", "R"));
+        ds.addUser(new User(user, "p", "Student", "Grader", "R", "CS"));
         ds.addCourse(new Course("G_AA", "AA Course", 3, 10, "p"));
         ds.addCourse(new Course("G_FF", "FF Course", 3, 10, "p"));
         

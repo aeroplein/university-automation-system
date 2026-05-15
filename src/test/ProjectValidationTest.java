@@ -57,7 +57,7 @@ public class ProjectValidationTest {
         DataStore ds = DataStore.getInstance();
         
         // Use an existing user from your data or add a test one
-        User testUser = new User("auth_test", "pass123", "Student", "Test Student", "REF001");
+        User testUser = new User("auth_test", "pass123", "Student", "Test Student", "REF001", "CS");
         ds.addUser(testUser);
         
         User authenticated = ds.authenticate("auth_test", "pass123");

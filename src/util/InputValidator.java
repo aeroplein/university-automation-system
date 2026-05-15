@@ -162,4 +162,18 @@ public class InputValidator {
         }
         return null;
     }
+
+    /**
+     * Generates a professional enterprise-grade Reference ID
+     * Structure: PREFIX-YEAR-SEQUENCE (e.g. INS-25-001)
+     */
+    public static String generateReferenceId(String role, int sequence) {
+        String prefix = "ADM";
+        if ("Instructor".equalsIgnoreCase(role)) prefix = "INS";
+        else if ("Student".equalsIgnoreCase(role)) prefix = "STU";
+        
+        int year = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) % 100;
+        // Enterprise format: PREFIX-YY-000 (e.g. INS-25-001)
+        return String.format("%s-%02d-%03d", prefix, year, Math.max(1, sequence));
+    }
 }
