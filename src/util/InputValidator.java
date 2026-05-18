@@ -1,5 +1,6 @@
 package util;
 
+// Touched to trigger IDE compilation re-index
 public class InputValidator {
 
     /**

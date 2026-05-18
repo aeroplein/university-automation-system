@@ -1,5 +1,6 @@
 package model;
 
+// Touched to trigger IDE compilation re-index
 /**
  * Faculty class represents a university faculty (e.g., Engineering, Science)
  */

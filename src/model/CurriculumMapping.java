@@ -1,7 +1,7 @@
 package model;
 
 /**
- * CurriculumMapping links a course to a department and year
+ * CurriculumMapping links a course to a department and year.
  */
 public class CurriculumMapping {
     private String departmentCode;

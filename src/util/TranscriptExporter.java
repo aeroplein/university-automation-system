@@ -1,6 +1,5 @@
 package util;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -38,7 +37,7 @@ public class TranscriptExporter {
     }
 
     private static String exportToText(String username, String path) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(path))) {
+        try (PrintWriter writer = new PrintWriter(new java.io.OutputStreamWriter(new java.io.FileOutputStream(path), java.nio.charset.StandardCharsets.UTF_8))) {
             writer.println("UNIVERSITY AUTOMATION SYSTEM - TRANSCRIPT");
             writer.println("==========================================");
             writer.println("Student Username: " + username);

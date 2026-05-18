@@ -59,6 +59,7 @@ public class UniversityAutomationApp extends JFrame {
         }
     }
 
+
     private void initializeUI() {
         setTitle("University Automation System");
         setSize(1100, 750);
@@ -92,6 +93,7 @@ public class UniversityAutomationApp extends JFrame {
         gbc.gridwidth = 2;
         gbc.insets = new Insets(0, 0, 50, 0);
         panel.add(title, gbc);
+        
 
         gbc.gridwidth = 1;
         gbc.insets = new Insets(10, 10, 10, 10);

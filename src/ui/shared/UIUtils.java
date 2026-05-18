@@ -6,6 +6,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 
+/**
+ * Modern UI helper utilities for University Automation System.
+ */
 public class UIUtils {
     public static final Color COCOA_BROWN = new Color(0x2D241E);
     public static final Color SAGE_GREEN = new Color(0x7C9070);
@@ -34,6 +37,7 @@ public class UIUtils {
         });
 
         container.add(searchPanel, BorderLayout.NORTH);
+        
     }
 
     public static JTable createModernTable(DefaultTableModel model) {

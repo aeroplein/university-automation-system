@@ -1,5 +1,6 @@
 package model;
 
+// Touched to trigger IDE compilation re-index
 /**
  * Department class represents an academic department in the university
  */

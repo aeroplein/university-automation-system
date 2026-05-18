@@ -2,7 +2,7 @@ package ui.admin;
 
 import data.DataStore;
 import model.Course;
-import model.CurriculumMapping;
+import model.CurriculumMapping; // Model for linking course to department & year
 import model.Department;
 import ui.shared.Refreshable;
 import ui.shared.UIUtils;
@@ -20,6 +20,7 @@ public class CurriculumManagementPanel extends JPanel implements Refreshable {
     private JComboBox<String> currDeptCombo;
     private JComboBox<Integer> currYearCombo;
     private JComboBox<String> courseCombo;
+    private JLabel totalsLabel;
 
     public CurriculumManagementPanel(DataStore dataStore) {
         this.dataStore = dataStore;
@@ -31,7 +32,7 @@ public class CurriculumManagementPanel extends JPanel implements Refreshable {
     }
 
     private void initUI() {
-        curriculumTableModel = new DefaultTableModel(new String[] { "Dept", "Year", "Course Code" }, 0) {
+        curriculumTableModel = new DefaultTableModel(new String[] { "Dept", "Year", "Course Code", "Course Name", "Credits", "ECTS" }, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
         curriculumTable = UIUtils.createModernTable(curriculumTableModel);
@@ -62,6 +63,32 @@ public class CurriculumManagementPanel extends JPanel implements Refreshable {
             }
         });
 
+        JButton delBtn = new JButton("Delete from Curriculum");
+        delBtn.setBackground(UIUtils.TERRACOTTA);
+        delBtn.setForeground(Color.WHITE);
+        delBtn.addActionListener(e -> {
+            int row = curriculumTable.getSelectedRow();
+            if (row >= 0) {
+                row = curriculumTable.convertRowIndexToModel(row);
+                String d = (String) curriculumTableModel.getValueAt(row, 0);
+                Integer y = (Integer) curriculumTableModel.getValueAt(row, 1);
+                String c = (String) curriculumTableModel.getValueAt(row, 2);
+
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Are you sure you want to remove course " + c + " from " + d + " Year " + y + " curriculum?",
+                        "Confirm Removal", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    dataStore.removeCurriculumMapping(d, y, c);
+                    refresh();
+                    JOptionPane.showMessageDialog(this, "Course successfully removed from curriculum.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Please select a curriculum mapping from the table to delete.",
+                        "No Selection", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.setOpaque(false);
         top.add(new JLabel("Dept: "));
@@ -71,6 +98,7 @@ public class CurriculumManagementPanel extends JPanel implements Refreshable {
         top.add(new JLabel("Course: "));
         top.add(courseCombo);
         top.add(addBtn);
+        top.add(delBtn);
 
         JPanel topWrapper = new JPanel(new BorderLayout(0, 5));
         topWrapper.setOpaque(false);
@@ -84,6 +112,15 @@ public class CurriculumManagementPanel extends JPanel implements Refreshable {
         add(topWrapper, BorderLayout.NORTH);
         add(new JScrollPane(curriculumTable), BorderLayout.CENTER);
 
+        totalsLabel = new JLabel("Curriculum Totals - Selected Credits: 0 | Selected ECTS: 0");
+        totalsLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        totalsLabel.setForeground(UIUtils.COCOA_BROWN);
+
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.setOpaque(false);
+        bottomPanel.add(totalsLabel);
+        add(bottomPanel, BorderLayout.SOUTH);
+
         refresh();
     }
 
@@ -94,11 +131,24 @@ public class CurriculumManagementPanel extends JPanel implements Refreshable {
             String dept = (String) currDeptCombo.getSelectedItem();
             Integer year = (Integer) currYearCombo.getSelectedItem();
 
+            int totalCredits = 0;
+            int totalEcts = 0;
             List<CurriculumMapping> mappings = dataStore.getAllCurriculumMappings();
             for (CurriculumMapping m : mappings) {
                 if (dept != null && !m.getDepartmentCode().equals(dept)) continue;
                 if (year != null && m.getYear() != year) continue;
-                curriculumTableModel.addRow(new Object[] { m.getDepartmentCode(), m.getYear(), m.getCourseCode() });
+                Course c = dataStore.findCourse(m.getCourseCode());
+                String cName = c != null ? c.getCourseName() : "-";
+                int ects = c != null ? c.getCredit() : 0;
+                int credits = c != null ? Math.max(1, (int) Math.round(ects * 0.6)) : 0;
+                
+                totalCredits += credits;
+                totalEcts += ects;
+                
+                curriculumTableModel.addRow(new Object[] { m.getDepartmentCode(), m.getYear(), m.getCourseCode(), cName, credits, ects });
+            }
+            if (totalsLabel != null) {
+                totalsLabel.setText("Curriculum Totals - Selected Credits: " + totalCredits + " | Selected ECTS: " + totalEcts);
             }
         }
 

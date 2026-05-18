@@ -1335,7 +1335,6 @@
 202310649,Burak Öztürk,CEN,1,burak.ozturk
 202310937,Fatma Çetin,CEN,1,fatma.cetin
 202310603,Ahmet Bulut,CEN,1,ahmet.bulut
-202310252,Pelin Kaya,CEN,1,pelin.kaya
 202310379,Burak Çetin,CEN,1,burak.cetin
 202310414,Ahmet Şimşek,CEN,1,ahmet.simsek
 202310595,İrem Çakır,CEN,1,irem.cakir

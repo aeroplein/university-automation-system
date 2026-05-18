@@ -1,7 +1,6 @@
 package data;
 
 import model.*;
-import util.InputValidator;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -9,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import util.InputValidator;
 
 /**
  * DataStore class manages all data persistence and business logic
@@ -95,7 +95,8 @@ public class DataStore {
                 createDefaultFaculties();
             }
 
-            // Enterprise Migration: Transition students from ID-based usernames to name-based usernames
+            // Enterprise Migration: Transition students from ID-based usernames to
+            // name-based usernames
             migrateUsernames();
 
             // Scalability: Ensure at least 25 students per department
@@ -116,22 +117,23 @@ public class DataStore {
             if ("Student".equalsIgnoreCase(u.getRole())) {
                 // Find corresponding profile to get the true Student ID
                 StudentProfile profile = findStudentProfileByUsername(u.getUsername());
-                
-                // If profile not found by username, try by fullName (risky but better than nothing)
+
+                // If profile not found by username, try by fullName (risky but better than
+                // nothing)
                 if (profile == null) {
                     profile = students.stream()
-                        .filter(s -> s.getFullName().equalsIgnoreCase(u.getFullName()))
-                        .findFirst()
-                        .orElse(null);
+                            .filter(s -> s.getFullName().equalsIgnoreCase(u.getFullName()))
+                            .findFirst()
+                            .orElse(null);
                 }
 
                 boolean needsMigration = false;
-                
+
                 // 1. Force migration to name.surname if dot is missing
                 if (!u.getUsername().contains(".")) {
                     needsMigration = true;
                 }
-                
+
                 // 2. Ensure referenceId matches true studentId for dual authentication
                 if (profile != null && !profile.getStudentId().equals(u.getReferenceId())) {
                     u.setReferenceId(profile.getStudentId());
@@ -141,9 +143,9 @@ public class DataStore {
                 if (needsMigration) {
                     String oldUsername = u.getUsername();
                     String newUsername = u.getUsername();
-                    
+
                     if (!oldUsername.contains(".")) {
-                        newUsername = util.InputValidator.generateUsername(u.getFullName());
+                        newUsername = InputValidator.generateUsername(u.getFullName());
                         // Ensure uniqueness
                         String base = newUsername;
                         int suffix = 1;
@@ -151,29 +153,36 @@ public class DataStore {
                             newUsername = base + (suffix++);
                         }
                     }
-                    
+
                     // Update User record
                     u.setUsername(newUsername);
-                    
+
                     // Update StudentProfile linkage
                     if (profile != null) {
                         profile.setUsername(newUsername);
                     } else {
                         // If no profile was found, try to find one by old username again just in case
                         StudentProfile p = findStudentProfileByUsername(oldUsername);
-                        if (p != null) p.setUsername(newUsername);
+                        if (p != null)
+                            p.setUsername(newUsername);
                     }
-                    
+
                     // Update linked records
                     final String targetNewUsername = newUsername;
-                    enrollments.forEach(e -> { if (e.getStudentUsername().equals(oldUsername)) e.setStudentUsername(targetNewUsername); });
-                    grades.forEach(g -> { if (g.getStudentUsername().equals(oldUsername)) g.setStudentUsername(targetNewUsername); });
-                    
+                    enrollments.forEach(e -> {
+                        if (e.getStudentUsername().equals(oldUsername))
+                            e.setStudentUsername(targetNewUsername);
+                    });
+                    grades.forEach(g -> {
+                        if (g.getStudentUsername().equals(oldUsername))
+                            g.setStudentUsername(targetNewUsername);
+                    });
+
                     changed = true;
                 }
             }
         }
-        
+
         if (changed) {
             saveUsers();
             saveStudents();
@@ -286,11 +295,12 @@ public class DataStore {
         }
 
         for (User user : users) {
-            // Students can login with either their username (name.surname) or their referenceId (Student ID)
+            // Students can login with either their username (name.surname) or their
+            // referenceId (Student ID)
             boolean usernameMatch = user.getUsername().equalsIgnoreCase(username);
-            boolean idMatch = "Student".equalsIgnoreCase(user.getRole()) && 
-                             user.getReferenceId() != null && 
-                             user.getReferenceId().equalsIgnoreCase(username);
+            boolean idMatch = "Student".equalsIgnoreCase(user.getRole()) &&
+                    user.getReferenceId() != null &&
+                    user.getReferenceId().equalsIgnoreCase(username);
 
             if ((usernameMatch || idMatch) && user.getPassword().equals(password)) {
                 return user;
@@ -937,7 +947,7 @@ public class DataStore {
      * Save users to file
      */
     public void saveUsers() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(USERS_FILE), java.nio.charset.StandardCharsets.UTF_8))) {
             for (User user : users) {
                 writer.write(user.toFileString());
                 writer.newLine();
@@ -957,7 +967,7 @@ public class DataStore {
             return;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 User user = User.fromFileString(line);
@@ -974,7 +984,7 @@ public class DataStore {
      * Save students to file
      */
     public void saveStudents() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(STUDENTS_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(STUDENTS_FILE), java.nio.charset.StandardCharsets.UTF_8))) {
             for (StudentProfile student : students) {
                 writer.write(student.toFileString());
                 writer.newLine();
@@ -994,7 +1004,7 @@ public class DataStore {
             return;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 StudentProfile student = StudentProfile.fromFileString(line);
@@ -1011,7 +1021,7 @@ public class DataStore {
      * Save courses to file
      */
     public void saveCourses() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(COURSES_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(COURSES_FILE), java.nio.charset.StandardCharsets.UTF_8))) {
             for (Course course : courses) {
                 writer.write(course.toFileString());
                 writer.newLine();
@@ -1031,7 +1041,7 @@ public class DataStore {
             return;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 Course course = Course.fromFileString(line);
@@ -1048,7 +1058,7 @@ public class DataStore {
      * Save enrollments to file
      */
     public void saveEnrollments() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ENROLLMENTS_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(ENROLLMENTS_FILE), java.nio.charset.StandardCharsets.UTF_8))) {
             for (Enrollment enrollment : enrollments) {
                 writer.write(enrollment.toFileString());
                 writer.newLine();
@@ -1068,7 +1078,7 @@ public class DataStore {
             return;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 Enrollment enrollment = Enrollment.fromFileString(line);
@@ -1085,7 +1095,7 @@ public class DataStore {
      * Save grades to file
      */
     public void saveGrades() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(GRADES_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(GRADES_FILE), java.nio.charset.StandardCharsets.UTF_8))) {
             for (GradeRecord grade : grades) {
                 writer.write(grade.toFileString());
                 writer.newLine();
@@ -1105,7 +1115,7 @@ public class DataStore {
             return;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 GradeRecord grade = GradeRecord.fromFileString(line);
@@ -1122,7 +1132,7 @@ public class DataStore {
      * Save departments to file
      */
     public void saveDepartments() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(DEPARTMENTS_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DEPARTMENTS_FILE), java.nio.charset.StandardCharsets.UTF_8))) {
             for (Department dept : departments) {
                 writer.write(dept.toFileString());
                 writer.newLine();
@@ -1140,7 +1150,7 @@ public class DataStore {
         File file = new File(DEPARTMENTS_FILE);
         if (!file.exists())
             return;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 Department dept = Department.fromFileString(line);
@@ -1164,7 +1174,7 @@ public class DataStore {
         File file = new File(FACULTIES_FILE);
         if (!file.exists())
             return;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 Faculty f = Faculty.fromFileString(line);
@@ -1177,7 +1187,7 @@ public class DataStore {
     }
 
     private void saveFaculties() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FACULTIES_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(FACULTIES_FILE), java.nio.charset.StandardCharsets.UTF_8))) {
             for (Faculty f : faculties) {
                 writer.write(f.toFileString());
                 writer.newLine();
@@ -1240,7 +1250,7 @@ public class DataStore {
         File file = new File(CURRICULUM_FILE);
         if (!file.exists())
             return;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 CurriculumMapping m = CurriculumMapping.fromFileString(line);
@@ -1253,7 +1263,7 @@ public class DataStore {
     }
 
     private void saveCurriculum() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(CURRICULUM_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(CURRICULUM_FILE), java.nio.charset.StandardCharsets.UTF_8))) {
             for (CurriculumMapping m : curriculumMappings) {
                 writer.write(m.toFileString());
                 writer.newLine();
@@ -1457,7 +1467,7 @@ public class DataStore {
         yearCourses.put(1, new String[][] {
                 { "101", "Introduction to " + name, "8" },
                 { "102", "Academic Writing & Ethics", "6" },
-                { "103", "Mathematics for " + name, "8" },
+                { "103", "Mathematics for " + name, "6" },
                 { "104", "Fundamental of Theory", "8" },
                 { "105", "Critical Thinking", "10" },
                 { "106", "University Life 101", "10" },

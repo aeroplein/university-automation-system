@@ -5,7 +5,7 @@ import data.DataStore;
 import model.Enrollment;
 import model.User;
 import ui.shared.Refreshable;
-import ui.shared.UIUtils;
+import ui.shared.UIUtils; // Import modern UI helper utilities
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
